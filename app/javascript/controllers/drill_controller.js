@@ -10,7 +10,7 @@ export default class extends Controller {
   static targets = [
     "prompt", "kindTag", "input", "feedback", "answer", "given", "answerSpeak",
     "difficulty", "alts", "detail", "nextBtn",
-    "progress", "score", "bar", "card", "summary", "summaryText", "missed", "auto", "voiceHint"
+    "progress", "score", "bar", "card", "summary", "summaryText", "missed", "auto", "autoWrong", "voiceHint"
   ]
   static values = { cards: Array, sentences: Array, from: String, to: String, recordUrl: String }
 
@@ -20,6 +20,9 @@ export default class extends Controller {
     this.index = 0
     this.autoOn = localStorage.getItem("drill-autoplay") === "1"
     if (this.hasAutoTarget) this.autoTarget.checked = this.autoOn
+    this.autoWrongOn = localStorage.getItem("drill-autoplay-wrong") === "1"
+    if (this.hasAutoWrongTarget) this.autoWrongTarget.checked = this.autoWrongOn
+    this.ownedThisRun = 0
     this.onKey = this.onKey.bind(this)
     window.addEventListener("keydown", this.onKey)
     this.render()
@@ -75,6 +78,13 @@ export default class extends Controller {
     result.graded = true
     this.record(card.id, result.correct, result.given)
     this.render()
+
+    if (result.correct) {
+      // Second correct in this direction -> it enters the owned collection + starts resting.
+      if ((card.correct_so_far || 0) + 1 === 2) this.celebrate(card)
+    } else if (this.autoWrongOn) {
+      this.speakAnswer()
+    }
   }
 
   next() {
@@ -170,8 +180,9 @@ export default class extends Controller {
       .filter((_, i) => this.results[i].graded && !this.results[i].correct)
       .map((c) => c.prompt)
 
+    const owned = this.ownedThisRun ? `🎉 ${this.ownedThisRun} newly owned. ` : ""
     this.summaryTextTarget.textContent = `${correct} / ${this.cards.length} correct (${pct}%)`
-    this.missedTarget.textContent = missed.length ? `Missed: ${missed.join(", ")}` : "Clean run — nothing missed."
+    this.missedTarget.textContent = owned + (missed.length ? `Missed: ${missed.join(", ")}` : "Clean run — nothing missed.")
     this.cardTarget.classList.add("hidden")
     this.summaryTarget.classList.remove("hidden")
   }
@@ -200,12 +211,32 @@ export default class extends Controller {
     this.altsTarget.textContent = extra.length ? `also accepted: ${extra.join(", ")}` : ""
   }
 
+  // A short celebration when a word crosses into the owned collection.
+  celebrate(card) {
+    this.ownedThisRun++
+    if (!this.hasCelebrateTarget) return
+    this.celebrateTextTarget.textContent = `🎉 Owned! “${card.answer}” is in your collection`
+    const el = this.celebrateTarget
+    const bubble = el.firstElementChild
+    el.classList.remove("hidden"); el.classList.add("flex")
+    bubble.classList.remove("animate-celebrate")
+    void bubble.offsetWidth // restart the animation
+    bubble.classList.add("animate-celebrate")
+    clearTimeout(this._celebrateTimer)
+    this._celebrateTimer = setTimeout(() => { el.classList.add("hidden"); el.classList.remove("flex") }, 2000)
+  }
+
   // --- speech (browser TTS, no backend) ---
 
   toggleAuto() {
     this.autoOn = this.autoTarget.checked
     localStorage.setItem("drill-autoplay", this.autoOn ? "1" : "0")
     if (this.autoOn) this.speakPrompt()
+  }
+
+  toggleAutoWrong() {
+    this.autoWrongOn = this.autoWrongTarget.checked
+    localStorage.setItem("drill-autoplay-wrong", this.autoWrongOn ? "1" : "0")
   }
 
   speakPrompt() { this.speak(this.cards[this.index].prompt, this.fromValue) }

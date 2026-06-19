@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+/* Celebration pop when a word enters the owned collection. */
+@keyframes celebrate-pop {
+  0%   { transform: translateY(-10px) scale(0.9); opacity: 0; }
+  18%  { transform: translateY(0) scale(1.06); opacity: 1; }
+  35%  { transform: scale(1); }
+  85%  { opacity: 1; }
+  100% { transform: translateY(-8px); opacity: 0; }
+}
+
+.animate-celebrate {
+  animation: celebrate-pop 2s ease-out forwards;
+}

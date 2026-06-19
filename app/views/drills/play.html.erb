@@ -44,8 +44,18 @@
           <input type="checkbox" data-drill-target="auto" data-action="change->drill#toggleAuto" class="accent-gray-700">
           🔊 auto-play prompt
         </label>
+        <label class="inline-flex cursor-pointer items-center gap-1">
+          <input type="checkbox" data-drill-target="autoWrong" data-action="change->drill#toggleAutoWrong" class="accent-gray-700">
+          🔊 read answer if wrong
+        </label>
       </div>
     </header>
+
+    <div data-drill-target="celebrate" class="pointer-events-none fixed inset-x-0 top-12 z-50 hidden justify-center px-4">
+      <div class="rounded-full border border-emerald-300 bg-emerald-50 px-5 py-2 text-sm font-medium text-emerald-700 shadow-sm dark:border-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+        <span data-drill-target="celebrateText"></span>
+      </div>
+    </div>
 
     <p data-drill-target="voiceHint"
        class="mb-4 hidden rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200"></p>
