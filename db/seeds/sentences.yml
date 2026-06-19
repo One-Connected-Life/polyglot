@@ -1,0 +1,95 @@
+# Sentence seed for the Dutch language-learning drill app.
+# Each entry uses 1-3 words drawn from vocabulary.yml.
+# nl = the Dutch sentence (surfaced to the learner — grammar/article/word-order
+#      accuracy is critical). en = natural English translation.
+# uses = English vocabulary labels (from vocabulary.yml) employed in the sentence.
+
+# --- Groceries & Food ---
+
+- nl: Ik koop brood en melk.
+  en: I buy bread and milk.
+  uses: [bread, milk]
+
+- nl: De kaas ligt in de tas.
+  en: The cheese is in the bag.
+  uses: [cheese, bag]
+
+- nl: Ik drink koffie met suiker.
+  en: I drink coffee with sugar.
+  uses: [coffee, sugar]
+
+- nl: Wil je thee of water?
+  en: Do you want tea or water?
+  uses: [tea, water]
+
+- nl: De supermarkt verkoopt vis en kip.
+  en: The supermarket sells fish and chicken.
+  uses: [supermarket, fish, chicken]
+
+- nl: Ik eet een appel als ontbijt.
+  en: I eat an apple for breakfast.
+  uses: [apple, breakfast]
+
+# --- Everyday & Survival ---
+
+- nl: Hallo, dank je wel.
+  en: Hello, thank you.
+  uses: [hello, thank you]
+
+- nl: Waar is het toilet?
+  en: Where is the toilet?
+  uses: [where, toilet]
+
+- nl: Hoeveel geld heb je?
+  en: How much money do you have?
+  uses: [how much, money]
+
+- nl: De man en de vrouw wonen hier.
+  en: The man and the woman live here.
+  uses: [man, woman]
+
+- nl: Mijn vriend komt vandaag.
+  en: My friend is coming today.
+  uses: [friend, today]
+
+- nl: De dokter helpt het kind.
+  en: The doctor helps the child.
+  uses: [doctor, child]
+
+# --- Road & Signs ---
+
+- nl: De uitgang is rechts.
+  en: The exit is on the right.
+  uses: [exit]
+
+- nl: Stop bij het verkeerslicht.
+  en: Stop at the traffic light.
+  uses: [stop, traffic light]
+
+- nl: De voetganger wacht op de brug.
+  en: The pedestrian waits on the bridge.
+  uses: [pedestrian, bridge]
+
+- nl: Pas op, gevaar op de weg.
+  en: Watch out, danger on the road.
+  uses: [danger, road]
+
+# --- Work & Technical ---
+
+- nl: Ik heb morgen een vergadering.
+  en: I have a meeting tomorrow.
+  uses: [meeting, tomorrow]
+
+- nl: Mijn collega stuurt het rapport per e-mail.
+  en: My colleague sends the report by email.
+  uses: [colleague, report, email]
+
+- nl: Ik typ mijn wachtwoord op het toetsenbord.
+  en: I type my password on the keyboard.
+  uses: [password, keyboard]
+
+# --- Legalese ---
+
+- nl: De huurder zet een handtekening op het contract.
+  en: The tenant puts a signature on the contract.
+  uses: [tenant, signature, contract]

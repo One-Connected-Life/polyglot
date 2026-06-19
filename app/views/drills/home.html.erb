@@ -24,7 +24,7 @@
   <div>
     <%= link_to "All words", play_path(deck: "all", from: "nl", to: "en"),
           class: "text-base font-semibold hover:underline" %>
-    <p class="text-xs text-gray-500 dark:text-gray-400">every deck, shuffled · <%= pluralize(@decks.sum { |d| d.terms.size }, "word") %></p>
+    <p class="text-xs text-gray-500 dark:text-gray-400">every word, shuffled · sentences mixed in · <%= pluralize(@word_count, "word") %></p>
   </div>
   <div class="flex items-center gap-2 text-xs">
     <%= link_to "NL → EN", play_path(deck: "all", from: "nl", to: "en"),
@@ -42,7 +42,8 @@
       <div>
         <%= link_to deck.name, play_path(deck: deck.slug, from: "nl", to: "en"),
               class: "text-base font-medium hover:underline" %>
-        <p class="text-xs text-gray-500 dark:text-gray-400"><%= pluralize(deck.terms.size, "word") %></p>
+        <% unit = deck.terms.exists?(kind: "sentence") ? "sentence" : "word" %>
+        <p class="text-xs text-gray-500 dark:text-gray-400"><%= pluralize(deck.terms.size, unit) %></p>
       </div>
       <div class="flex items-center gap-2 text-xs">
         <%= link_to "NL → EN", play_path(deck: deck.slug, from: "nl", to: "en"),

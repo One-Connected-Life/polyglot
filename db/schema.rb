@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_19_193000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_19_194500) do
   create_table "attempts", force: :cascade do |t|
     t.boolean "correct", default: false, null: false
     t.datetime "created_at", null: false
@@ -35,9 +35,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_19_193000) do
   create_table "terms", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "deck_id", null: false
+    t.string "kind", default: "word", null: false
     t.integer "position", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["deck_id"], name: "index_terms_on_deck_id"
+    t.index ["kind"], name: "index_terms_on_kind"
   end
 
   create_table "translations", force: :cascade do |t|

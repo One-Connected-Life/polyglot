@@ -1,7 +1,10 @@
 class DrillsController < ApplicationController
+  LANG_ORDER = Translation::SURFACED + (Translation::LANGUAGES.keys - Translation::SURFACED)
+
   def home
     @decks = Deck.includes(:terms).order(:position)
     @miss_counts = Attempt.miss_counts
+    @word_count = Term.where(kind: "word").count
   end
 
   def play
@@ -15,39 +18,54 @@ class DrillsController < ApplicationController
     terms = select_terms(params[:deck]).includes(:translations).to_a
     terms.select! { |t| t.difficulty != :easy } if @skip_easy
 
-    @cards = terms.filter_map do |term|
-      prompt = term.translation(@from)
-      answer = term.translation(@to)
-      next unless prompt && answer
+    @cards = terms.filter_map { |term| build_card(term) }
 
-      {
-        id: term.id,
-        prompt: prompt.with_article,
-        answer: answer.text,
-        answer_article: answer.article,
-        accept: answer.accepted_answers,
-        difficulty: term.difficulty.to_s,
-      }
-    end
+    # Sentences sprinkle into word drills — but not when the deck IS sentences.
+    @sentences =
+      if @is_sentence_deck
+        []
+      else
+        Term.where(kind: "sentence").includes(:translations).filter_map { |t| build_card(t) }
+      end
   end
 
   private
 
+  def build_card(term)
+    prompt = term.translation(@from)
+    answer = term.translation(@to)
+    return nil unless prompt && answer
+
+    {
+      id: term.id,
+      kind: term.kind,
+      prompt: prompt.with_article,
+      answer: answer.text,
+      answer_article: answer.article,
+      accept: answer.accepted_answers,
+      difficulty: (term.kind == "word" ? term.difficulty.to_s : ""),
+      translations: LANG_ORDER.filter_map { |code|
+        t = term.translation(code)
+        { lang: code, text: t.with_article } if t
+      },
+    }
+  end
+
   def select_terms(deck_param)
     case deck_param
     when "misses"
-      ids = Attempt.missed_term_ids(from: @from, to: @to)
       @title = "Your misses"
       @deck_slug = "misses"
-      Term.where(id: ids)
+      Term.where(id: Attempt.missed_term_ids(from: @from, to: @to))
     when "all", nil, ""
       @title = "All words"
       @deck_slug = "all"
-      Term.order(:deck_id, :position)
+      Term.where(kind: "word").order(:deck_id, :position)
     else
       @deck = Deck.find_by!(slug: deck_param)
       @title = @deck.name
       @deck_slug = @deck.slug
+      @is_sentence_deck = @deck.terms.exists?(kind: "sentence")
       @deck.terms
     end
   end

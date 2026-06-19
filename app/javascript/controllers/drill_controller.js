@@ -3,18 +3,19 @@ import { speak as pronounce } from "speech"
 
 const DIFFICULTY_METER = { easy: "● ○ ○", medium: "● ● ○", hard: "● ● ●" }
 
-// Keyboard-driven drill. Prompt -> type -> Enter checks -> arrows/Space/Enter move.
-// Keys are handled on window (not the input) so navigation works after the input
-// is locked on reveal. Cards arrive as JSON, graded in-browser — no round-trip.
+// Keyboard-driven drill. Prompt -> type -> Enter checks (and reveals the full
+// multi-language card) -> arrows/Space/Enter move. Keys handled on window so
+// navigation works after the input locks. Cards are graded in-browser.
 export default class extends Controller {
   static targets = [
-    "prompt", "input", "feedback", "answer", "given", "answerSpeak", "difficulty", "alts",
+    "prompt", "kindTag", "input", "feedback", "answer", "given", "answerSpeak",
+    "difficulty", "alts", "detail", "nextBtn",
     "progress", "score", "bar", "card", "summary", "summaryText", "missed", "auto", "voiceHint"
   ]
-  static values = { cards: Array, from: String, to: String, recordUrl: String }
+  static values = { cards: Array, sentences: Array, from: String, to: String, recordUrl: String }
 
   connect() {
-    this.cards = this.shuffle([...this.cardsValue])
+    this.cards = this.buildSequence(this.cardsValue, this.hasSentencesValue ? this.sentencesValue : [])
     this.results = this.cards.map(() => ({ graded: false, correct: false, given: "" }))
     this.index = 0
     this.autoOn = localStorage.getItem("drill-autoplay") === "1"
@@ -28,6 +29,22 @@ export default class extends Controller {
     window.removeEventListener("keydown", this.onKey)
   }
 
+  // Shuffle words, then sprinkle sentences in after a word (~1 in 3); rest at end.
+  buildSequence(words, sentences) {
+    const w = this.shuffle([...words])
+    const s = this.shuffle([...sentences])
+    if (s.length === 0) return w
+
+    const seq = []
+    let si = 0
+    w.forEach((word) => {
+      seq.push(word)
+      if (si < s.length && Math.random() < 0.34) seq.push(s[si++])
+    })
+    while (si < s.length) seq.push(s[si++])
+    return seq
+  }
+
   onKey(event) {
     const result = this.results[this.index]
 
@@ -37,7 +54,6 @@ export default class extends Controller {
       return
     }
 
-    // Reveal: navigate.
     switch (event.key) {
       case "ArrowRight":
       case "ArrowDown":
@@ -77,8 +93,14 @@ export default class extends Controller {
   render() {
     const card = this.cards[this.index]
     const result = this.results[this.index]
+    const isSentence = card.kind === "sentence"
 
     this.promptTarget.textContent = card.prompt
+    this.promptTarget.className = isSentence
+      ? "mt-2 text-2xl font-medium leading-snug"
+      : "mt-2 text-4xl font-semibold tracking-tight sm:text-5xl"
+    if (this.hasKindTagTarget) this.kindTagTarget.textContent = isSentence ? " · sentence" : ""
+
     this.progressTarget.textContent = `${this.index + 1} / ${this.cards.length}`
     this.barTarget.style.width = `${((this.index + 1) / this.cards.length) * 100}%`
     this.updateScore()
@@ -97,6 +119,8 @@ export default class extends Controller {
       if (this.hasAnswerSpeakTarget) this.answerSpeakTarget.classList.remove("hidden")
       this.showDifficulty(card.difficulty)
       this.showAlts(card)
+      this.renderDetail(card)
+      if (this.hasNextBtnTarget) this.nextBtnTarget.classList.remove("hidden")
 
       if (!result.correct && this.normalize(result.given) !== "") {
         this.givenTarget.textContent = `you typed: ${result.given}`
@@ -114,9 +138,29 @@ export default class extends Controller {
       if (this.hasAnswerSpeakTarget) this.answerSpeakTarget.classList.add("hidden")
       if (this.hasDifficultyTarget) this.difficultyTarget.textContent = ""
       if (this.hasAltsTarget) this.altsTarget.textContent = ""
+      if (this.hasDetailTarget) { this.detailTarget.innerHTML = ""; this.detailTarget.classList.add("hidden") }
+      if (this.hasNextBtnTarget) this.nextBtnTarget.classList.add("hidden")
       this.inputTarget.focus()
       if (this.autoOn) this.speakPrompt()
     }
+  }
+
+  // The "all languages" card from the show page, rendered inline on reveal.
+  // Stimulus auto-connects the injected speak buttons.
+  renderDetail(card) {
+    if (!this.hasDetailTarget) return
+    const esc = (s) => (s || "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]))
+    this.detailTarget.innerHTML = (card.translations || []).map((t) => {
+      const surfaced = t.lang === this.fromValue || t.lang === this.toValue
+      return `<div class="flex items-center justify-between py-1.5">
+        <div class="flex items-baseline gap-3">
+          <span class="w-6 text-[11px] uppercase text-gray-400">${esc(t.lang)}</span>
+          <span class="text-sm ${surfaced ? "font-medium" : "text-gray-500 dark:text-gray-400"}">${esc(t.text)}</span>
+        </div>
+        <button type="button" data-controller="speak" data-speak-text-value="${esc(t.text)}" data-speak-lang-value="${esc(t.lang)}" data-action="speak#say" class="rounded-md px-2 py-1 text-sm text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label="pronounce">🔊</button>
+      </div>`
+    }).join("")
+    this.detailTarget.classList.remove("hidden")
   }
 
   finish() {
@@ -185,7 +229,6 @@ export default class extends Controller {
 
   // --- persistence ---
 
-  // Fire-and-forget: persist the answer without blocking the drill rhythm.
   record(termId, correct, given) {
     if (!this.hasRecordUrlValue || !this.recordUrlValue) return
     const token = document.querySelector('meta[name="csrf-token"]')?.content
@@ -197,11 +240,12 @@ export default class extends Controller {
     }).catch(() => {})
   }
 
-  // Forgiving compare: case/whitespace/diacritics-insensitive, ignores leading articles.
+  // Forgiving compare: case/whitespace/diacritics/punctuation-insensitive, ignores leading articles.
   normalize(value) {
     return (value || "")
       .toLowerCase()
       .normalize("NFD").replace(/[̀-ͯ]/g, "")
+      .replace(/[.,!?;:]/g, "")
       .replace(/^(de|het|een|the|a|an)\s+/, "")
       .replace(/\s+/g, " ")
       .trim()

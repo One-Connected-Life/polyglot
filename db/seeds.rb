@@ -44,6 +44,26 @@ ActiveRecord::Base.transaction do
       end
     end
   end
+
+  # English answer alternates (big -> large, no entry -> wrong way, ...).
+  alt_path = Rails.root.join("db/seeds/alternates.yml")
+  if File.exist?(alt_path)
+    YAML.load_file(alt_path).each do |label, alts|
+      next if alts.blank?
+      Translation.where(language: "en", text: label).update_all(alternates: Array(alts).join("|"))
+    end
+  end
+
+  # Sentences -> their own "Sentences" deck, kind: "sentence".
+  sent_path = Rails.root.join("db/seeds/sentences.yml")
+  if File.exist?(sent_path)
+    sdeck = Deck.create!(name: "Sentences", position: deck_cache.size + 1)
+    YAML.load_file(sent_path).each_with_index do |row, i|
+      term = sdeck.terms.create!(kind: "sentence", position: i + 1)
+      term.translations.create!(language: "nl", text: row["nl"])
+      term.translations.create!(language: "en", text: row["en"])
+    end
+  end
 end
 
 puts "Seeded #{Deck.count} decks, #{Term.count} terms, #{Translation.count} translations."
