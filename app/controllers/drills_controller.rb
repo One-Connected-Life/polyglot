@@ -15,8 +15,14 @@ class DrillsController < ApplicationController
     session[:skip_easy] = params[:skip_easy] == "1" if params.key?(:skip_easy)
     @skip_easy = session[:skip_easy] || false
 
+    # Rest mastered words (2x correct -> 7 days, 3x+ -> 14 days). Sticky, on by default.
+    session[:hide_mastered] = params[:hide_mastered] == "1" if params.key?(:hide_mastered)
+    @hide_mastered = session.key?(:hide_mastered) ? session[:hide_mastered] : true
+    resting = @hide_mastered ? Attempt.resting_term_ids(from: @from, to: @to) : []
+
     terms = select_terms(params[:deck]).includes(:translations).to_a
     terms.select! { |t| t.difficulty != :easy } if @skip_easy
+    terms.reject! { |t| resting.include?(t.id) } unless @deck_slug == "misses"
 
     @cards = terms.filter_map { |term| build_card(term) }
 
@@ -25,7 +31,9 @@ class DrillsController < ApplicationController
       if @is_sentence_deck
         []
       else
-        Term.where(kind: "sentence").includes(:translations).filter_map { |t| build_card(t) }
+        pool = Term.where(kind: "sentence").includes(:translations).to_a
+        pool.reject! { |t| resting.include?(t.id) }
+        pool.filter_map { |t| build_card(t) }
       end
   end
 

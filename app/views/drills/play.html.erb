@@ -1,16 +1,18 @@
 <% content_for :title, "#{@title} — drill" %>
 
 <% if @cards.empty? %>
-  <p class="text-sm text-gray-500 dark:text-gray-400">
-    <% if @skip_easy %>
-      No <span class="font-medium">harder</span> <%= Translation::LANGUAGES[@from] %> → <%= Translation::LANGUAGES[@to] %> words here —
-      <%= link_to "show easy ones too", play_path(deck: @deck_slug, from: @from, to: @to, skip_easy: "0"), class: "underline" %>
-      or <%= link_to "back to decks", root_path, class: "underline" %>.
-    <% else %>
-      No <%= Translation::LANGUAGES[@from] %> → <%= Translation::LANGUAGES[@to] %> pairs in this deck yet.
-      <%= link_to "Back to decks", root_path, class: "underline" %>
-    <% end %>
-  </p>
+  <div class="text-sm text-gray-500 dark:text-gray-400">
+    <p>Nothing to drill here right now<%= " — they're all resting (mastered for now)" if @hide_mastered %>.</p>
+    <div class="mt-2 flex flex-wrap gap-3">
+      <% if @hide_mastered %>
+        <%= link_to "show mastered", play_path(deck: @deck_slug, from: @from, to: @to, hide_mastered: "0"), class: "underline" %>
+      <% end %>
+      <% if @skip_easy %>
+        <%= link_to "show easy cognates", play_path(deck: @deck_slug, from: @from, to: @to, skip_easy: "0"), class: "underline" %>
+      <% end %>
+      <%= link_to "back to decks", root_path, class: "underline" %>
+    </div>
+  </div>
 <% else %>
   <div data-controller="drill"
        data-drill-cards-value="<%= @cards.to_json %>"
@@ -31,6 +33,11 @@
         <div>
           <%= link_to (@skip_easy ? "easy cognates: hidden" : "easy cognates: shown"),
                 play_path(deck: @deck_slug, from: @from, to: @to, skip_easy: @skip_easy ? "0" : "1"),
+                class: "hover:underline" %>
+        </div>
+        <div>
+          <%= link_to (@hide_mastered ? "mastered: resting 7–14d" : "mastered: shown"),
+                play_path(deck: @deck_slug, from: @from, to: @to, hide_mastered: @hide_mastered ? "0" : "1"),
                 class: "hover:underline" %>
         </div>
         <label class="inline-flex cursor-pointer items-center gap-1">
