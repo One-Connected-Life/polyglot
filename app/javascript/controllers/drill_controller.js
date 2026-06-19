@@ -8,7 +8,7 @@ export default class extends Controller {
     "prompt", "input", "feedback", "answer", "given",
     "progress", "score", "bar", "card", "summary", "summaryText", "missed"
   ]
-  static values = { cards: Array }
+  static values = { cards: Array, from: String, to: String, recordUrl: String }
 
   connect() {
     this.cards = this.shuffle([...this.cardsValue])
@@ -51,7 +51,20 @@ export default class extends Controller {
     result.given = this.inputTarget.value
     result.correct = this.normalize(result.given) === this.normalize(card.answer)
     result.graded = true
+    this.record(card.id, result.correct, result.given)
     this.render()
+  }
+
+  // Fire-and-forget: persist the answer without blocking the drill rhythm.
+  record(termId, correct, given) {
+    if (!this.hasRecordUrlValue || !this.recordUrlValue) return
+    const token = document.querySelector('meta[name="csrf-token"]')?.content
+    fetch(this.recordUrlValue, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": token || "" },
+      body: JSON.stringify({ term_id: termId, from: this.fromValue, to: this.toValue, correct, given }),
+      keepalive: true,
+    }).catch(() => {})
   }
 
   next() {

@@ -6,7 +6,11 @@
     <%= link_to "Back to decks", root_path, class: "underline" %>
   </p>
 <% else %>
-  <div data-controller="drill" data-drill-cards-value="<%= @cards.to_json %>">
+  <div data-controller="drill"
+       data-drill-cards-value="<%= @cards.to_json %>"
+       data-drill-from-value="<%= @from %>"
+       data-drill-to-value="<%= @to %>"
+       data-drill-record-url-value="<%= attempts_path %>">
     <header class="mb-6 flex items-start justify-between">
       <div>
         <%= link_to "← decks", root_path, class: "text-xs text-gray-500 hover:underline dark:text-gray-400" %>

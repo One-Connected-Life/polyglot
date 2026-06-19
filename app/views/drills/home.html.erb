@@ -5,6 +5,21 @@
   <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Your vocabulary, your pace. Pick a deck.</p>
 </header>
 
+<% if @miss_counts.any? %>
+  <div class="mb-4 flex items-center justify-between gap-4 rounded-lg border border-gray-200 border-l-4 border-l-rose-400 bg-white px-4 py-4 dark:border-gray-700 dark:border-l-rose-400 dark:bg-gray-900">
+    <div>
+      <span class="text-base font-semibold">Your misses</span>
+      <p class="text-xs text-gray-500 dark:text-gray-400">words you got wrong last time — get them right to clear them</p>
+    </div>
+    <div class="flex items-center gap-2 text-xs">
+      <% @miss_counts.each do |(from, to), count| %>
+        <%= link_to "#{from.upcase} → #{to.upcase} (#{count})", play_path(deck: "misses", from: from, to: to),
+              class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
 <div class="mb-8 flex items-center justify-between gap-4 rounded-lg border border-gray-300 bg-white px-4 py-4 dark:border-gray-700 dark:bg-gray-900">
   <div>
     <%= link_to "All words", play_path(deck: "all", from: "nl", to: "en"),

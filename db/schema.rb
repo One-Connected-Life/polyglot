@@ -10,7 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_19_191009) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_19_192428) do
+  create_table "attempts", force: :cascade do |t|
+    t.boolean "correct", default: false, null: false
+    t.datetime "created_at", null: false
+    t.string "from_language", null: false
+    t.string "given"
+    t.integer "term_id", null: false
+    t.string "to_language", null: false
+    t.datetime "updated_at", null: false
+    t.index ["from_language", "to_language", "term_id"], name: "index_attempts_on_from_language_and_to_language_and_term_id"
+    t.index ["term_id"], name: "index_attempts_on_term_id"
+  end
+
   create_table "decks", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
@@ -39,6 +51,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_19_191009) do
     t.index ["term_id"], name: "index_translations_on_term_id"
   end
 
+  add_foreign_key "attempts", "terms"
   add_foreign_key "terms", "decks"
   add_foreign_key "translations", "terms"
 end
