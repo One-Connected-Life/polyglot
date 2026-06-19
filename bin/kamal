@@ -34,7 +34,8 @@ if File.file?(env_file)
     next if line.empty? || line.start_with?("#")
     key, sep, val = line.partition("=")
     next if sep.empty?
-    ENV[key.strip] ||= val.strip
+    # Strip surrounding quotes so ANTHROPIC_API_KEY="sk-ant-…" doesn't ship with quotes.
+    ENV[key.strip] ||= val.strip.gsub(/\A["']|["']\z/, "")
   end
 end
 
