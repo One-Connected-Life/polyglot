@@ -76,12 +76,12 @@ export default class extends Controller {
     const accepted = (card.accept && card.accept.length ? card.accept : [card.answer]).map((a) => this.normalize(a))
     result.correct = accepted.includes(this.normalize(result.given))
     result.graded = true
-    this.record(card.id, result.correct, result.given)
+    const saved = this.record(card.id, result.correct, result.given)
     this.render()
 
     if (result.correct) {
-      // Second correct in this direction -> it enters the owned collection + starts resting.
-      if ((card.correct_so_far || 0) + 1 === 2) this.celebrate(card)
+      // Server tells us when this answer first reaches 2 corrects (enters the collection).
+      saved.then((data) => { if (data && data.newly_owned) this.celebrate(card) })
     } else if (this.autoWrongOn) {
       this.speakAnswer()
     }
@@ -261,14 +261,14 @@ export default class extends Controller {
   // --- persistence ---
 
   record(termId, correct, given) {
-    if (!this.hasRecordUrlValue || !this.recordUrlValue) return
+    if (!this.hasRecordUrlValue || !this.recordUrlValue) return Promise.resolve(null)
     const token = document.querySelector('meta[name="csrf-token"]')?.content
-    fetch(this.recordUrlValue, {
+    return fetch(this.recordUrlValue, {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-CSRF-Token": token || "" },
       body: JSON.stringify({ term_id: termId, from: this.fromValue, to: this.toValue, correct, given }),
       keepalive: true,
-    }).catch(() => {})
+    }).then((r) => (r.ok ? r.json() : null)).catch(() => null)
   }
 
   // Forgiving compare: case/whitespace/diacritics/punctuation-insensitive, ignores leading articles.

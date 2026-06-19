@@ -19,7 +19,6 @@ class DrillsController < ApplicationController
     session[:hide_mastered] = params[:hide_mastered] == "1" if params.key?(:hide_mastered)
     @hide_mastered = session.key?(:hide_mastered) ? session[:hide_mastered] : true
     resting = @hide_mastered ? Attempt.resting_term_ids(from: @from, to: @to) : []
-    @correct_counts = Attempt.where(from_language: @from, to_language: @to, correct: true).group(:term_id).count
 
     terms = select_terms(params[:deck]).includes(:translations).to_a
     terms.select! { |t| t.difficulty != :easy } if @skip_easy
@@ -53,7 +52,6 @@ class DrillsController < ApplicationController
       answer_article: answer.article,
       accept: answer.accepted_answers,
       difficulty: (term.kind == "word" ? term.difficulty.to_s : ""),
-      correct_so_far: (@correct_counts[term.id] || 0),
       translations: LANG_ORDER.filter_map { |code|
         t = term.translation(code)
         { lang: code, text: t.with_article } if t
