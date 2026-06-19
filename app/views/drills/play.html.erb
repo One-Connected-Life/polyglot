@@ -100,15 +100,28 @@
       <div data-drill-target="detail"
            class="mx-auto mt-2 hidden max-w-sm divide-y divide-gray-100 border-t border-gray-100 pt-2 text-left dark:divide-gray-800 dark:border-gray-800"></div>
 
-      <div class="mt-6 flex justify-center">
+      <div class="mt-6 flex items-stretch justify-center gap-3">
+        <button type="button" data-drill-target="backBtn" data-action="drill#prev"
+                aria-label="Previous word"
+                class="hidden rounded-2xl border border-gray-300 px-5 text-2xl leading-none text-gray-500 transition active:scale-95 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800">
+          ←
+        </button>
+        <button type="button" data-drill-target="checkBtn" data-action="drill#grade"
+                aria-label="Check answer"
+                class="hidden min-w-[12rem] rounded-2xl bg-gray-900 px-8 py-5 text-center text-lg font-semibold text-white shadow-sm transition active:scale-95 hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+          Check <span class="ml-2 align-middle">✓</span>
+        </button>
         <button type="button" data-drill-target="nextBtn" data-action="drill#next"
-                class="hidden rounded-lg border border-gray-300 px-5 py-2 text-sm hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800">
-          Next →
+                aria-label="Next word"
+                class="hidden min-w-[12rem] rounded-2xl bg-gray-900 px-8 py-5 text-center text-lg font-semibold text-white shadow-sm transition active:scale-95 hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+          Next word <span class="ml-2 align-middle text-3xl leading-none">→</span>
         </button>
       </div>
 
       <p class="mt-6 text-center text-[11px] text-gray-400">
-        <span class="font-medium">Enter</span> check · <span class="font-medium">→ ↓ Space Enter</span> next · <span class="font-medium">← ↑</span> back
+        Tap a button, or <span class="font-medium">swipe →</span> forward / <span class="font-medium">swipe ←</span> back
+        <br class="sm:hidden">
+        <span class="hidden sm:inline">· </span><span class="font-medium">Enter</span> check · <span class="font-medium">→ ↓ Space</span> next · <span class="font-medium">← ↑</span> back
       </p>
     </div>
 

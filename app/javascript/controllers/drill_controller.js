@@ -9,7 +9,7 @@ const DIFFICULTY_METER = { easy: "● ○ ○", medium: "● ● ○", hard: "�
 export default class extends Controller {
   static targets = [
     "prompt", "kindTag", "input", "feedback", "answer", "given", "answerSpeak",
-    "difficulty", "alts", "detail", "nextBtn",
+    "difficulty", "alts", "detail", "nextBtn", "checkBtn", "backBtn",
     "progress", "score", "bar", "card", "summary", "summaryText", "missed", "auto", "autoWrong", "voiceHint"
   ]
   static values = { cards: Array, sentences: Array, from: String, to: String, recordUrl: String }
@@ -25,11 +25,51 @@ export default class extends Controller {
     this.ownedThisRun = 0
     this.onKey = this.onKey.bind(this)
     window.addEventListener("keydown", this.onKey)
+    this.bindSwipe()
     this.render()
   }
 
   disconnect() {
     window.removeEventListener("keydown", this.onKey)
+    this.unbindSwipe()
+  }
+
+  // Touch: swipe right = forward (reveal, then next), swipe left = back.
+  // Mirrors Enter/ArrowRight so phone-in-bed practice needs no keyboard.
+  bindSwipe() {
+    if (!this.hasCardTarget) return
+    this.touchStartX = null
+    this.onTouchStart = (event) => {
+      const t = event.changedTouches[0]
+      this.touchStartX = t.clientX
+      this.touchStartY = t.clientY
+    }
+    this.onTouchEnd = (event) => {
+      if (this.touchStartX == null) return
+      const t = event.changedTouches[0]
+      const dx = t.clientX - this.touchStartX
+      const dy = t.clientY - this.touchStartY
+      this.touchStartX = null
+      // Need a clear, mostly-horizontal flick to count as a swipe.
+      if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy)) return
+      if (dx > 0) this.forward()
+      else this.prev()
+    }
+    this.cardTarget.addEventListener("touchstart", this.onTouchStart, { passive: true })
+    this.cardTarget.addEventListener("touchend", this.onTouchEnd, { passive: true })
+  }
+
+  unbindSwipe() {
+    if (!this.hasCardTarget) return
+    this.cardTarget.removeEventListener("touchstart", this.onTouchStart)
+    this.cardTarget.removeEventListener("touchend", this.onTouchEnd)
+  }
+
+  // One forward step: reveal the answer if still answering, else advance.
+  // Same overload as Enter / the big → button / swipe-right.
+  forward() {
+    if (this.results[this.index].graded) this.next()
+    else this.grade()
   }
 
   // Shuffle words, then sprinkle sentences in after a word (~1 in 3); rest at end.
@@ -131,6 +171,7 @@ export default class extends Controller {
       this.showAlts(card)
       this.renderDetail(card)
       if (this.hasNextBtnTarget) this.nextBtnTarget.classList.remove("hidden")
+      if (this.hasCheckBtnTarget) this.checkBtnTarget.classList.add("hidden")
 
       if (!result.correct && this.normalize(result.given) !== "") {
         this.givenTarget.textContent = `you typed: ${result.given}`
@@ -150,9 +191,13 @@ export default class extends Controller {
       if (this.hasAltsTarget) this.altsTarget.textContent = ""
       if (this.hasDetailTarget) { this.detailTarget.innerHTML = ""; this.detailTarget.classList.add("hidden") }
       if (this.hasNextBtnTarget) this.nextBtnTarget.classList.add("hidden")
+      if (this.hasCheckBtnTarget) this.checkBtnTarget.classList.remove("hidden")
       this.inputTarget.focus()
       if (this.autoOn) this.speakPrompt()
     }
+
+    // Back is available whenever there's a previous card, in either state.
+    if (this.hasBackBtnTarget) this.backBtnTarget.classList.toggle("hidden", this.index === 0)
   }
 
   // The "all languages" card from the show page, rendered inline on reveal.
