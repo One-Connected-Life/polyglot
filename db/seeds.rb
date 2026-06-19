@@ -60,8 +60,11 @@ ActiveRecord::Base.transaction do
     sdeck = Deck.create!(name: "Sentences", position: deck_cache.size + 1)
     YAML.load_file(sent_path).each_with_index do |row, i|
       term = sdeck.terms.create!(kind: "sentence", position: i + 1)
-      term.translations.create!(language: "nl", text: row["nl"])
-      term.translations.create!(language: "en", text: row["en"])
+      Translation::LANGUAGES.keys.each do |lang|
+        text = row[lang]
+        next if text.blank?
+        term.translations.create!(language: lang, text: text)
+      end
     end
   end
 end

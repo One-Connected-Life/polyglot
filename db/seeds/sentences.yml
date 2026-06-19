@@ -8,88 +8,188 @@
 
 - nl: Ik koop brood en melk.
   en: I buy bread and milk.
+  es: Compro pan y leche.
+  fr: J'achète du pain et du lait.
+  it: Compro pane e latte.
+  ro: Cumpăr pâine și lapte.
+  ru: Я покупаю хлеб и молоко.
   uses: [bread, milk]
 
 - nl: De kaas ligt in de tas.
   en: The cheese is in the bag.
+  es: El queso está en la bolsa.
+  fr: Le fromage est dans le sac.
+  it: Il formaggio è nella borsa.
+  ro: Brânza este în geantă.
+  ru: Сыр лежит в сумке.
   uses: [cheese, bag]
 
 - nl: Ik drink koffie met suiker.
   en: I drink coffee with sugar.
+  es: Bebo café con azúcar.
+  fr: Je bois du café avec du sucre.
+  it: Bevo caffè con zucchero.
+  ro: Beau cafea cu zahăr.
+  ru: Я пью кофе с сахаром.
   uses: [coffee, sugar]
 
 - nl: Wil je thee of water?
   en: Do you want tea or water?
+  es: ¿Quieres té o agua?
+  fr: Veux-tu du thé ou de l'eau ?
+  it: Vuoi tè o acqua?
+  ro: Vrei ceai sau apă?
+  ru: Хочешь чай или воду?
   uses: [tea, water]
 
 - nl: De supermarkt verkoopt vis en kip.
   en: The supermarket sells fish and chicken.
+  es: El supermercado vende pescado y pollo.
+  fr: Le supermarché vend du poisson et du poulet.
+  it: Il supermercato vende pesce e pollo.
+  ro: Supermarketul vinde pește și pui.
+  ru: Супермаркет продаёт рыбу и курицу.
   uses: [supermarket, fish, chicken]
 
 - nl: Ik eet een appel als ontbijt.
   en: I eat an apple for breakfast.
+  es: Como una manzana para el desayuno.
+  fr: Je mange une pomme au petit-déjeuner.
+  it: Mangio una mela a colazione.
+  ro: Mănânc un măr la micul dejun.
+  ru: Я ем яблоко на завтрак.
   uses: [apple, breakfast]
 
 # --- Everyday & Survival ---
 
 - nl: Hallo, dank je wel.
   en: Hello, thank you.
+  es: Hola, gracias.
+  fr: Bonjour, merci.
+  it: Ciao, grazie.
+  ro: Bună, mulțumesc.
+  ru: Здравствуйте, спасибо.
   uses: [hello, thank you]
 
 - nl: Waar is het toilet?
   en: Where is the toilet?
+  es: ¿Dónde está el baño?
+  fr: Où sont les toilettes ?
+  it: Dov'è il bagno?
+  ro: Unde este toaleta?
+  ru: Где туалет?
   uses: [where, toilet]
 
 - nl: Hoeveel geld heb je?
   en: How much money do you have?
+  es: ¿Cuánto dinero tienes?
+  fr: Combien d'argent as-tu ?
+  it: Quanti soldi hai?
+  ro: Câți bani ai?
+  ru: Сколько у тебя денег?
   uses: [how much, money]
 
 - nl: De man en de vrouw wonen hier.
   en: The man and the woman live here.
+  es: El hombre y la mujer viven aquí.
+  fr: L'homme et la femme habitent ici.
+  it: L'uomo e la donna abitano qui.
+  ro: Bărbatul și femeia locuiesc aici.
+  ru: Мужчина и женщина живут здесь.
   uses: [man, woman]
 
 - nl: Mijn vriend komt vandaag.
   en: My friend is coming today.
+  es: Mi amigo viene hoy.
+  fr: Mon ami vient aujourd'hui.
+  it: Il mio amico viene oggi.
+  ro: Prietenul meu vine astăzi.
+  ru: Мой друг приходит сегодня.
   uses: [friend, today]
 
 - nl: De dokter helpt het kind.
   en: The doctor helps the child.
+  es: El médico ayuda al niño.
+  fr: Le médecin aide l'enfant.
+  it: Il medico aiuta il bambino.
+  ro: Doctorul ajută copilul.
+  ru: Врач помогает ребёнку.
   uses: [doctor, child]
 
 # --- Road & Signs ---
 
 - nl: De uitgang is rechts.
   en: The exit is on the right.
+  es: La salida está a la derecha.
+  fr: La sortie est à droite.
+  it: L'uscita è a destra.
+  ro: Ieșirea este la dreapta.
+  ru: Выход направо.
   uses: [exit]
 
 - nl: Stop bij het verkeerslicht.
   en: Stop at the traffic light.
+  es: Para en el semáforo.
+  fr: Arrête-toi au feu de circulation.
+  it: Fermati al semaforo.
+  ro: Oprește la semafor.
+  ru: Остановись на светофоре.
   uses: [stop, traffic light]
 
 - nl: De voetganger wacht op de brug.
   en: The pedestrian waits on the bridge.
+  es: El peatón espera en el puente.
+  fr: Le piéton attend sur le pont.
+  it: Il pedone aspetta sul ponte.
+  ro: Pietonul așteaptă pe pod.
+  ru: Пешеход ждёт на мосту.
   uses: [pedestrian, bridge]
 
 - nl: Pas op, gevaar op de weg.
   en: Watch out, danger on the road.
+  es: Cuidado, peligro en la carretera.
+  fr: Attention, danger sur la route.
+  it: Attenzione, pericolo sulla strada.
+  ro: Atenție, pericol pe drum.
+  ru: Осторожно, опасность на дороге.
   uses: [danger, road]
 
 # --- Work & Technical ---
 
 - nl: Ik heb morgen een vergadering.
   en: I have a meeting tomorrow.
+  es: Tengo una reunión mañana.
+  fr: J'ai une réunion demain.
+  it: Ho una riunione domani.
+  ro: Am o ședință mâine.
+  ru: У меня завтра встреча.
   uses: [meeting, tomorrow]
 
 - nl: Mijn collega stuurt het rapport per e-mail.
   en: My colleague sends the report by email.
+  es: Mi colega envía el informe por correo electrónico.
+  fr: Mon collègue envoie le rapport par e-mail.
+  it: Il mio collega invia il rapporto via e-mail.
+  ro: Colegul meu trimite raportul prin e-mail.
+  ru: Мой коллега отправляет отчёт по электронной почте.
   uses: [colleague, report, email]
 
 - nl: Ik typ mijn wachtwoord op het toetsenbord.
   en: I type my password on the keyboard.
+  es: Escribo mi contraseña en el teclado.
+  fr: Je tape mon mot de passe sur le clavier.
+  it: Digito la mia password sulla tastiera.
+  ro: Îmi tastez parola pe tastatură.
+  ru: Я набираю свой пароль на клавиатуре.
   uses: [password, keyboard]
 
 # --- Legalese ---
 
 - nl: De huurder zet een handtekening op het contract.
   en: The tenant puts a signature on the contract.
+  es: El inquilino pone una firma en el contrato.
+  fr: Le locataire appose une signature sur le contrat.
+  it: L'inquilino mette una firma sul contratto.
+  ro: Chiriașul pune o semnătură pe contract.
+  ru: Арендатор ставит подпись на договоре.
   uses: [tenant, signature, contract]
