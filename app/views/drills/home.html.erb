@@ -21,6 +21,20 @@
   </div>
 <% end %>
 
+<% failed = @decks.select { |d| d.status == "failed" } %>
+<% if failed.any? %>
+  <div class="mb-6 rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300">
+    <p>Couldn't build <%= failed.map(&:name).to_sentence %> — the word generator errored. Try
+      <%= link_to "a different topic", new_deck_path, class: "underline" %>.</p>
+    <div class="mt-2 flex flex-wrap gap-2">
+      <% failed.each do |d| %>
+        <%= button_to "Remove #{d.name}", deck_path(d), method: :delete,
+              class: "rounded border border-rose-300 px-2 py-0.5 text-xs hover:bg-rose-100 dark:border-rose-700 dark:hover:bg-rose-900/40" %>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
 <% if @word_count.zero? && pending.none? %>
   <div class="rounded-lg border border-gray-300 bg-white px-5 py-6 text-center dark:border-gray-700 dark:bg-gray-900">
     <p class="text-sm text-gray-600 dark:text-gray-300">No words yet.</p>
