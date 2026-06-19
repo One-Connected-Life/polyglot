@@ -1,0 +1,38 @@
+<% content_for :title, "Create your account" %>
+
+<div class="mx-auto max-w-sm">
+  <h1 class="text-2xl font-semibold tracking-tight">Create your account</h1>
+  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Pick what you want to learn next.</p>
+
+  <% if @user.errors.any? %>
+    <ul class="mt-4 space-y-1 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300">
+      <% @user.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <%= form_with model: @user, url: registration_path, class: "mt-6 space-y-4" do |f| %>
+    <div>
+      <%= f.label :name, "Your name", class: "block text-xs font-medium text-gray-600 dark:text-gray-300" %>
+      <%= f.text_field :name, autofocus: true, autocomplete: "name", placeholder: "Mihai", class: "mt-1 #{field_classes}" %>
+    </div>
+    <div>
+      <%= f.label :email_address, "Email", class: "block text-xs font-medium text-gray-600 dark:text-gray-300" %>
+      <%= f.email_field :email_address, required: true, autocomplete: "username", placeholder: "you@example.com", class: "mt-1 #{field_classes}" %>
+    </div>
+    <div>
+      <%= f.label :password, "Password", class: "block text-xs font-medium text-gray-600 dark:text-gray-300" %>
+      <%= f.password_field :password, required: true, autocomplete: "new-password", placeholder: "at least 8 characters", maxlength: 72, class: "mt-1 #{field_classes}" %>
+    </div>
+    <div>
+      <%= f.label :password_confirmation, "Confirm password", class: "block text-xs font-medium text-gray-600 dark:text-gray-300" %>
+      <%= f.password_field :password_confirmation, required: true, autocomplete: "new-password", placeholder: "again", maxlength: 72, class: "mt-1 #{field_classes}" %>
+    </div>
+    <%= f.submit "Create account", class: primary_button_classes %>
+  <% end %>
+
+  <p class="mt-6 text-sm text-gray-500 dark:text-gray-400">
+    Already have an account? <%= link_to "Sign in", new_session_path, class: "font-medium text-gray-900 underline dark:text-gray-100" %>
+  </p>
+</div>

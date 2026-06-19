@@ -1,7 +1,12 @@
 class Attempt < ApplicationRecord
   belongs_to :term
+  belongs_to :user
 
   validates :from_language, :to_language, presence: true
+
+  # The class-method scopes below (resting_term_ids, missed_term_ids, miss_counts)
+  # are called on a per-user relation — `current_user.attempts.resting_term_ids(...)`
+  # — so their internal `where` is automatically scoped to that user.
 
   # Term ids whose MOST RECENT attempt in this direction was wrong.
   # Get one right and it leaves your misses; miss it again and it returns.
@@ -34,9 +39,9 @@ class Attempt < ApplicationRecord
     end
   end
 
-  # { ["nl","en"] => count, ... } for surfaced directions that have any misses.
-  def self.miss_counts
-    Translation::SURFACED.permutation(2).each_with_object({}) do |(from, to), acc|
+  # { [from, to] => count, ... } for the user's drill directions that have misses.
+  def self.miss_counts(langs:)
+    langs.permutation(2).each_with_object({}) do |(from, to), acc|
       count = missed_term_ids(from: from, to: to).size
       acc[[from, to]] = count if count.positive?
     end

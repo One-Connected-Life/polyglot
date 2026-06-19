@@ -1,16 +1,17 @@
 class AttemptsController < ApplicationController
   def create
-    term = Term.find(params[:term_id])
+    term = current_user.terms.find(params[:term_id])
     correct = ActiveModel::Type::Boolean.new.cast(params[:correct])
-    term.attempts.create!(
+    current_user.attempts.create!(
+      term: term,
       from_language: params[:from],
       to_language: params[:to],
       correct: correct,
       given: params[:given].to_s.first(255)
     )
 
-    correct_count = term.attempts
-                        .where(from_language: params[:from], to_language: params[:to], correct: true)
+    correct_count = current_user.attempts
+                        .where(term_id: term.id, from_language: params[:from], to_language: params[:to], correct: true)
                         .count
 
     # newly_owned: this correct answer is the one that first reaches 2 corrects.

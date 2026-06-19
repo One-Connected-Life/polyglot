@@ -15,15 +15,15 @@ class Term < ApplicationRecord
     (translation("en") || translations.first)&.text
   end
 
-  # How far the Dutch is from the English, as a learning-difficulty bucket.
+  # How far the target word is from the source word, as a difficulty bucket.
   # Cognates (sorry/sorry, dokter/doctor) come out :easy and can be filtered.
-  def difficulty
-    nl = translation("nl")&.text
-    en = translation("en")&.text
-    return :unknown unless nl && en
+  def difficulty(lang_a, lang_b)
+    a_text = translation(lang_a)&.text
+    b_text = translation(lang_b)&.text
+    return :unknown unless a_text && b_text
 
-    a = self.class.normalize_for_distance(nl)
-    b = self.class.normalize_for_distance(en)
+    a = self.class.normalize_for_distance(a_text)
+    b = self.class.normalize_for_distance(b_text)
     return :hard if a.empty? || b.empty?
 
     distance = self.class.levenshtein(a, b).to_f / [a.length, b.length].max

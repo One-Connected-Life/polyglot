@@ -14,30 +14,30 @@
   <table class="w-full text-sm">
     <thead>
       <tr class="border-b border-gray-200 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:text-gray-400">
-        <th class="py-1.5 pr-2 font-semibold">Dutch</th>
-        <th class="py-1.5 pr-2 font-semibold">English</th>
-        <th class="py-1.5 pr-2 text-right font-semibold">NL→EN</th>
-        <th class="py-1.5 pr-2 text-right font-semibold">EN→NL</th>
+        <th class="py-1.5 pr-2 font-semibold"><%= current_user.target_language_name %></th>
+        <th class="py-1.5 pr-2 font-semibold"><%= current_user.source_language_name %></th>
+        <th class="py-1.5 pr-2 text-right font-semibold"><%= @target.upcase %>→<%= @source.upcase %></th>
+        <th class="py-1.5 pr-2 text-right font-semibold"><%= @source.upcase %>→<%= @target.upcase %></th>
         <th class="py-1.5 font-semibold">Status</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
       <% @words.each do |term| %>
-        <% nl_en = @summary[[term.id, "nl", "en"]] %>
-        <% en_nl = @summary[[term.id, "en", "nl"]] %>
+        <% t2s = @summary[[term.id, @target, @source]] %>
+        <% s2t = @summary[[term.id, @source, @target]] %>
         <% status = word_status(term) %>
         <tr class="tabular-nums">
           <td class="py-1 pr-2">
-            <%= link_to term.translation("nl")&.with_article, term_path(term), class: "hover:underline" %>
+            <%= link_to term.translation(@target)&.with_article, term_path(term), class: "hover:underline" %>
           </td>
-          <td class="py-1 pr-2 text-gray-600 dark:text-gray-300 truncate max-w-[10rem]"><%= term.translation("en")&.text %></td>
+          <td class="py-1 pr-2 text-gray-600 dark:text-gray-300 truncate max-w-[10rem]"><%= term.translation(@source)&.text %></td>
           <td class="py-1 pr-2 text-right whitespace-nowrap">
-            <span class="text-emerald-600 dark:text-emerald-400">✓<%= nl_en[:correct] %></span>
-            <span class="text-rose-500 dark:text-rose-400 ml-1">✗<%= nl_en[:wrong] %></span>
+            <span class="text-emerald-600 dark:text-emerald-400">✓<%= t2s[:correct] %></span>
+            <span class="text-rose-500 dark:text-rose-400 ml-1">✗<%= t2s[:wrong] %></span>
           </td>
           <td class="py-1 pr-2 text-right whitespace-nowrap text-gray-400">
-            <span>✓<%= en_nl[:correct] %></span>
-            <span class="ml-1">✗<%= en_nl[:wrong] %></span>
+            <span>✓<%= s2t[:correct] %></span>
+            <span class="ml-1">✗<%= s2t[:wrong] %></span>
           </td>
           <td class="py-1 whitespace-nowrap text-xs <%=
             case status

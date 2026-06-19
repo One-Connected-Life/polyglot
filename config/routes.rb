@@ -1,4 +1,11 @@
 Rails.application.routes.draw do
+  resource :session
+  resource :registration, only: [:new, :create]
+  resources :passwords, param: :token
+
+  get "onboarding", to: "onboarding#show"
+  patch "onboarding", to: "onboarding#update"
+
   get "up" => "rails/health#show", as: :rails_health_check
 
   root "drills#home"
@@ -14,4 +21,7 @@ Rails.application.routes.draw do
 
   # Every word + your attempt history (right/wrong) and status.
   get "stats", to: "stats#index"
+
+  # AI-generate a deck from a topic, or remove one.
+  resources :decks, only: [:new, :create, :destroy]
 end

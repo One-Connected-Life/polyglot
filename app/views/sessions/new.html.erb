@@ -1,0 +1,27 @@
+<% content_for :title, "Sign in" %>
+
+<div class="mx-auto max-w-sm">
+  <h1 class="text-2xl font-semibold tracking-tight">Sign in</h1>
+  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Welcome back.</p>
+
+  <% if alert = flash[:alert] %>
+    <p class="mt-4 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300"><%= alert %></p>
+  <% end %>
+
+  <%= form_with url: session_path, method: :post, class: "mt-6 space-y-4" do |f| %>
+    <div>
+      <%= f.label :email_address, "Email", class: "block text-xs font-medium text-gray-600 dark:text-gray-300" %>
+      <%= f.email_field :email_address, required: true, autofocus: true, autocomplete: "username", value: params[:email_address], placeholder: "you@example.com", class: "mt-1 #{field_classes}" %>
+    </div>
+    <div>
+      <%= f.label :password, "Password", class: "block text-xs font-medium text-gray-600 dark:text-gray-300" %>
+      <%= f.password_field :password, required: true, autocomplete: "current-password", placeholder: "••••••••", maxlength: 72, class: "mt-1 #{field_classes}" %>
+    </div>
+    <%= f.submit "Sign in", class: primary_button_classes %>
+  <% end %>
+
+  <div class="mt-6 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+    <%= link_to "Create an account", new_registration_path, class: "font-medium text-gray-900 underline dark:text-gray-100" %>
+    <%= link_to "Forgot password?", new_password_path, class: "hover:underline" %>
+  </div>
+</div>

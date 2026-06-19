@@ -1,59 +1,76 @@
-<% content_for :title, "Dutch drill" %>
+<% content_for :title, "#{current_user.target_language_name} drill" %>
+<% target = current_user.target_language %>
+<% source = current_user.source_language %>
 
 <header class="mb-10 flex items-end justify-between gap-4">
   <div>
-    <h1 class="text-2xl font-semibold tracking-tight">Dutch drill</h1>
-    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Your vocabulary, your pace. Pick a deck.</p>
+    <h1 class="text-2xl font-semibold tracking-tight"><%= current_user.target_language_name %> drill</h1>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Your vocabulary, your pace.</p>
   </div>
   <%= link_to "Your words →", stats_path, class: "shrink-0 text-xs text-gray-500 hover:underline dark:text-gray-400" %>
 </header>
 
-<% if @miss_counts.any? %>
-  <div class="mb-4 flex items-center justify-between gap-4 rounded-lg border border-gray-200 border-l-4 border-l-rose-400 bg-white px-4 py-4 dark:border-gray-700 dark:border-l-rose-400 dark:bg-gray-900">
-    <div>
-      <span class="text-base font-semibold">Your misses</span>
-      <p class="text-xs text-gray-500 dark:text-gray-400">words you got wrong last time — get them right to clear them</p>
-    </div>
-    <div class="flex items-center gap-2 text-xs">
-      <% @miss_counts.each do |(from, to), count| %>
-        <%= link_to "#{from.upcase} → #{to.upcase} (#{count})", play_path(deck: "misses", from: from, to: to),
-              class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
-      <% end %>
-    </div>
+<% if @decks.none? || @word_count.zero? %>
+  <div class="rounded-lg border border-gray-300 bg-white px-5 py-6 text-center dark:border-gray-700 dark:bg-gray-900">
+    <p class="text-sm text-gray-600 dark:text-gray-300">No words yet.</p>
+    <p class="mx-auto mt-1 max-w-sm text-xs text-gray-500 dark:text-gray-400">
+      Pick a few topics and we'll build a <%= current_user.target_language_name %> deck for you.
+    </p>
+    <%= link_to "Create your first deck", new_deck_path,
+          class: "mt-5 inline-block rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white" %>
   </div>
-<% end %>
-
-<div class="mb-8 flex items-center justify-between gap-4 rounded-lg border border-gray-300 bg-white px-4 py-4 dark:border-gray-700 dark:bg-gray-900">
-  <div>
-    <%= link_to "All words", play_path(deck: "all", from: "nl", to: "en"),
-          class: "text-base font-semibold hover:underline" %>
-    <p class="text-xs text-gray-500 dark:text-gray-400">every word, shuffled · sentences mixed in · <%= pluralize(@word_count, "word") %></p>
-  </div>
-  <div class="flex items-center gap-2 text-xs">
-    <%= link_to "NL → EN", play_path(deck: "all", from: "nl", to: "en"),
-          class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
-    <%= link_to "EN → NL", play_path(deck: "all", from: "en", to: "nl"),
-          class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
-  </div>
-</div>
-
-<p class="mb-3 text-xs uppercase tracking-wide text-gray-400">or one deck</p>
-
-<ul class="divide-y divide-gray-200 border-y border-gray-200 dark:divide-gray-800 dark:border-gray-800">
-  <% @decks.each do |deck| %>
-    <li class="flex items-center justify-between gap-4 py-4">
+<% else %>
+  <% if @miss_counts.any? %>
+    <div class="mb-4 flex items-center justify-between gap-4 rounded-lg border border-gray-200 border-l-4 border-l-rose-400 bg-white px-4 py-4 dark:border-gray-700 dark:border-l-rose-400 dark:bg-gray-900">
       <div>
-        <%= link_to deck.name, play_path(deck: deck.slug, from: "nl", to: "en"),
-              class: "text-base font-medium hover:underline" %>
-        <% unit = deck.terms.exists?(kind: "sentence") ? "sentence" : "word" %>
-        <p class="text-xs text-gray-500 dark:text-gray-400"><%= pluralize(deck.terms.size, unit) %></p>
+        <span class="text-base font-semibold">Your misses</span>
+        <p class="text-xs text-gray-500 dark:text-gray-400">words you got wrong last time — get them right to clear them</p>
       </div>
       <div class="flex items-center gap-2 text-xs">
-        <%= link_to "NL → EN", play_path(deck: deck.slug, from: "nl", to: "en"),
-              class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
-        <%= link_to "EN → NL", play_path(deck: deck.slug, from: "en", to: "nl"),
-              class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
+        <% @miss_counts.each do |(from, to), count| %>
+          <%= link_to "#{from.upcase} → #{to.upcase} (#{count})", play_path(deck: "misses", from: from, to: to),
+                class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
+        <% end %>
       </div>
-    </li>
+    </div>
   <% end %>
-</ul>
+
+  <div class="mb-8 flex items-center justify-between gap-4 rounded-lg border border-gray-300 bg-white px-4 py-4 dark:border-gray-700 dark:bg-gray-900">
+    <div>
+      <%= link_to "All words", play_path(deck: "all", from: target, to: source),
+            class: "text-base font-semibold hover:underline" %>
+      <p class="text-xs text-gray-500 dark:text-gray-400">every word, shuffled · <%= pluralize(@word_count, "word") %></p>
+    </div>
+    <div class="flex items-center gap-2 text-xs">
+      <%= link_to "#{target.upcase} → #{source.upcase}", play_path(deck: "all", from: target, to: source),
+            class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
+      <%= link_to "#{source.upcase} → #{target.upcase}", play_path(deck: "all", from: source, to: target),
+            class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
+    </div>
+  </div>
+
+  <div class="mb-3 flex items-center justify-between">
+    <p class="text-xs uppercase tracking-wide text-gray-400">your decks</p>
+    <%= link_to "+ add a topic", new_deck_path, class: "text-xs text-gray-500 hover:underline dark:text-gray-400" %>
+  </div>
+
+  <ul class="divide-y divide-gray-200 border-y border-gray-200 dark:divide-gray-800 dark:border-gray-800">
+    <% @decks.each do |deck| %>
+      <% next if deck.terms.empty? %>
+      <li class="flex items-center justify-between gap-4 py-4">
+        <div>
+          <%= link_to deck.name, play_path(deck: deck.slug, from: target, to: source),
+                class: "text-base font-medium hover:underline" %>
+          <% unit = deck.terms.exists?(kind: "sentence") ? "sentence" : "word" %>
+          <p class="text-xs text-gray-500 dark:text-gray-400"><%= pluralize(deck.terms.size, unit) %></p>
+        </div>
+        <div class="flex items-center gap-2 text-xs">
+          <%= link_to "#{target.upcase} → #{source.upcase}", play_path(deck: deck.slug, from: target, to: source),
+                class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
+          <%= link_to "#{source.upcase} → #{target.upcase}", play_path(deck: deck.slug, from: source, to: target),
+                class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
+        </div>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

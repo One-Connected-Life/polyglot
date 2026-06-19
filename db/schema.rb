@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_19_194500) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_19_211401) do
   create_table "attempts", force: :cascade do |t|
     t.boolean "correct", default: false, null: false
     t.datetime "created_at", null: false
@@ -19,8 +19,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_19_194500) do
     t.integer "term_id", null: false
     t.string "to_language", null: false
     t.datetime "updated_at", null: false
+    t.integer "user_id"
     t.index ["from_language", "to_language", "term_id"], name: "index_attempts_on_from_language_and_to_language_and_term_id"
     t.index ["term_id"], name: "index_attempts_on_term_id"
+    t.index ["user_id"], name: "index_attempts_on_user_id"
   end
 
   create_table "decks", force: :cascade do |t|
@@ -28,8 +30,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_19_194500) do
     t.string "name", null: false
     t.integer "position", default: 0, null: false
     t.string "slug", null: false
+    t.string "topic"
     t.datetime "updated_at", null: false
-    t.index ["slug"], name: "index_decks_on_slug", unique: true
+    t.integer "user_id"
+    t.index ["user_id", "slug"], name: "index_decks_on_user_id_and_slug", unique: true
+    t.index ["user_id"], name: "index_decks_on_user_id"
+  end
+
+  create_table "sessions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "ip_address"
+    t.datetime "updated_at", null: false
+    t.string "user_agent"
+    t.integer "user_id", null: false
+    t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
   create_table "terms", force: :cascade do |t|
@@ -54,7 +68,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_19_194500) do
     t.index ["term_id"], name: "index_translations_on_term_id"
   end
 
+  create_table "users", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "email_address", null: false
+    t.integer "generations_count", default: 0, null: false
+    t.string "name"
+    t.string "password_digest", null: false
+    t.string "source_language", default: "en", null: false
+    t.string "target_language"
+    t.datetime "updated_at", null: false
+    t.index ["email_address"], name: "index_users_on_email_address", unique: true
+  end
+
   add_foreign_key "attempts", "terms"
+  add_foreign_key "attempts", "users"
+  add_foreign_key "decks", "users"
+  add_foreign_key "sessions", "users"
   add_foreign_key "terms", "decks"
   add_foreign_key "translations", "terms"
 end

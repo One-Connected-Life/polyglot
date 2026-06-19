@@ -1,8 +1,9 @@
 class Deck < ApplicationRecord
+  belongs_to :user
   has_many :terms, -> { order(:position) }, dependent: :destroy
 
   validates :name, presence: true
-  validates :slug, presence: true, uniqueness: true
+  validates :slug, presence: true, uniqueness: { scope: :user_id }
 
   before_validation :set_slug, on: :create
 

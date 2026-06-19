@@ -19,12 +19,20 @@ ActiveRecord::Base.transaction do
   Term.delete_all
   Deck.delete_all
 
+  # The seeded Dutch vocabulary belongs to Mihai (the first user).
+  owner = User.find_or_create_by!(email_address: "mihai@example.com") do |u|
+    u.name = "Mihai"
+    u.password = "password" # dev seed only
+    u.target_language = "nl"
+    u.source_language = "en"
+  end
+
   deck_cache = {}
   positions = Hash.new(0)
 
   entries.each do |row|
     deck_name = row.fetch("deck")
-    deck = deck_cache[deck_name] ||= Deck.create!(name: deck_name, position: deck_cache.size)
+    deck = deck_cache[deck_name] ||= Deck.create!(name: deck_name, position: deck_cache.size, user: owner)
 
     term = deck.terms.create!(position: (positions[deck.id] += 1))
 
@@ -57,7 +65,7 @@ ActiveRecord::Base.transaction do
   # Sentences -> their own "Sentences" deck, kind: "sentence".
   sent_path = Rails.root.join("db/seeds/sentences.yml")
   if File.exist?(sent_path)
-    sdeck = Deck.create!(name: "Sentences", position: deck_cache.size + 1)
+    sdeck = Deck.create!(name: "Sentences", position: deck_cache.size + 1, user: owner)
     YAML.load_file(sent_path).each_with_index do |row, i|
       term = sdeck.terms.create!(kind: "sentence", position: i + 1)
       Translation::LANGUAGES.keys.each do |lang|

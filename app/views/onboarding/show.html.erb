@@ -1,0 +1,32 @@
+<% content_for :title, "What are you learning?" %>
+
+<div class="mx-auto max-w-sm">
+  <h1 class="text-2xl font-semibold tracking-tight">What do you want to learn?</h1>
+  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">You can change this anytime.</p>
+
+  <% if @user.errors.any? %>
+    <ul class="mt-4 space-y-1 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300">
+      <% @user.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <%= form_with model: @user, url: onboarding_path, method: :patch, class: "mt-6 space-y-4" do |f| %>
+    <% if @user.name.blank? %>
+      <div>
+        <%= f.label :name, "Your name", class: "block text-xs font-medium text-gray-600 dark:text-gray-300" %>
+        <%= f.text_field :name, autocomplete: "name", class: "mt-1 #{field_classes}" %>
+      </div>
+    <% end %>
+    <div>
+      <%= f.label :target_language, "I want to learn", class: "block text-xs font-medium text-gray-600 dark:text-gray-300" %>
+      <%= f.select :target_language, options_for_select(language_options, @user.target_language), { prompt: "Choose a language" }, required: true, class: "mt-1 #{field_classes}" %>
+    </div>
+    <div>
+      <%= f.label :source_language, "I already speak", class: "block text-xs font-medium text-gray-600 dark:text-gray-300" %>
+      <%= f.select :source_language, options_for_select(language_options, @user.source_language || "en"), {}, class: "mt-1 #{field_classes}" %>
+    </div>
+    <%= f.submit "Start learning", class: primary_button_classes %>
+  <% end %>
+</div>
