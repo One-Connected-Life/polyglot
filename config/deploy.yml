@@ -3,8 +3,8 @@
 # Shares the Hetzner box with oneconnectedlife, promise-tracker,
 # connectiongames (kamal-proxy on :80/:443, Host-routed) and quizzes
 # (bare IP :8080). We follow the quizzes pattern: skip kamal-proxy and
-# bind directly to host :8081. Bare IP, HTTP — no domain, no TLS.
-# Reachable at http://178.104.104.237:8081
+# bind directly to host :8082. Bare IP, HTTP — no domain, no TLS.
+# Reachable at http://178.104.104.237:8082
 #
 # (HTTPS/a domain only becomes necessary when we add mic-based "speak your
 # answer" — browsers block getUserMedia on insecure origins.)
@@ -27,7 +27,7 @@ servers:
     proxy: false
     options:
       publish:
-        - "8081:80"
+        - "8082:80"
 
 registry:
   server: ghcr.io

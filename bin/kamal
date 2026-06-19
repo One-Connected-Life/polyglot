@@ -24,4 +24,18 @@ end
 require "rubygems"
 require "bundler/setup"
 
+# Auto-load .env so KAMAL_REGISTRY_PASSWORD / RAILS_MASTER_KEY are present.
+# Zero-dependency parser (dotenv gem isn't bundled). Non-overwriting: explicit
+# shell exports win. Without this, `kamal deploy` pushes empty secrets (#883).
+env_file = File.expand_path("../.env", __dir__)
+if File.file?(env_file)
+  File.foreach(env_file) do |line|
+    line = line.strip
+    next if line.empty? || line.start_with?("#")
+    key, sep, val = line.partition("=")
+    next if sep.empty?
+    ENV[key.strip] ||= val.strip
+  end
+end
+
 load Gem.bin_path("kamal", "kamal")
