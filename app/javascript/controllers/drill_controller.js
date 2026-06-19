@@ -1,9 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-
-// ISO 639-1 -> BCP-47 so the browser picks the right voice.
-const LANG_TAGS = {
-  en: "en-GB", nl: "nl-NL", es: "es-ES", fr: "fr-FR", it: "it-IT", ro: "ro-RO", ru: "ru-RU",
-}
+import { speak as pronounce } from "speech"
 
 const DIFFICULTY_METER = { easy: "● ○ ○", medium: "● ● ○", hard: "● ● ●" }
 
@@ -13,7 +9,7 @@ const DIFFICULTY_METER = { easy: "● ○ ○", medium: "● ● ○", hard: "�
 export default class extends Controller {
   static targets = [
     "prompt", "input", "feedback", "answer", "given", "answerSpeak", "difficulty", "alts",
-    "progress", "score", "bar", "card", "summary", "summaryText", "missed", "auto"
+    "progress", "score", "bar", "card", "summary", "summaryText", "missed", "auto", "voiceHint"
   ]
   static values = { cards: Array, from: String, to: String, recordUrl: String }
 
@@ -172,11 +168,19 @@ export default class extends Controller {
   speakAnswer() { this.speak(this.cards[this.index].answer, this.toValue) }
 
   speak(text, code) {
-    if (!("speechSynthesis" in window) || !text) return
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = LANG_TAGS[code] || code
-    window.speechSynthesis.cancel()
-    window.speechSynthesis.speak(utterance)
+    pronounce(text, code, { onResult: ({ hasVoice, lang }) => this.flagMissingVoice(hasVoice, lang) })
+  }
+
+  flagMissingVoice(hasVoice, lang) {
+    if (!this.hasVoiceHintTarget) return
+    if (hasVoice) {
+      this.voiceHintTarget.classList.add("hidden")
+    } else {
+      this.voiceHintTarget.textContent =
+        `No ${lang} voice installed — audio falls back to English (wrong). ` +
+        `Install one: System Settings → Accessibility → Spoken Content → System Voices → add a Dutch voice, then reload.`
+      this.voiceHintTarget.classList.remove("hidden")
+    }
   }
 
   // --- persistence ---

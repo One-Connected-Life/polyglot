@@ -8,4 +8,7 @@ Rails.application.routes.draw do
 
   # Records one graded answer (fire-and-forget from the drill).
   post "attempts", to: "attempts#create"
+
+  # Stable per-word page — reload to re-test pronunciation, see all languages.
+  resources :terms, only: [:show]
 end
