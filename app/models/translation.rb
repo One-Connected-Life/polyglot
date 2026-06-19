@@ -24,6 +24,16 @@ class Translation < ApplicationRecord
     LANGUAGES[language]
   end
 
+  # Extra acceptable answers beyond the primary text (pipe-separated).
+  def alternate_list
+    alternates.to_s.split("|").map(&:strip).reject(&:blank?)
+  end
+
+  # Everything that should be graded correct when this translation is the answer.
+  def accepted_answers
+    [text, *alternate_list]
+  end
+
   # "het brood" when an article is set, otherwise just the word.
   def with_article
     article.present? ? "#{article} #{text}" : text

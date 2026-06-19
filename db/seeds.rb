@@ -14,6 +14,7 @@ entries = YAML.load_file(path)
 langs = Translation::LANGUAGES.keys
 
 ActiveRecord::Base.transaction do
+  Attempt.delete_all # term ids are rebuilt below; reseeding therefore resets miss history
   Translation.delete_all
   Term.delete_all
   Deck.delete_all
@@ -32,7 +33,12 @@ ActiveRecord::Base.transaction do
       next if value.nil?
 
       if value.is_a?(Hash)
-        term.translations.create!(language: lang, text: value["text"], article: value["article"])
+        term.translations.create!(
+          language: lang,
+          text: value["text"],
+          article: value["article"],
+          alternates: Array(value["alt"]).join("|").presence
+        )
       else
         term.translations.create!(language: lang, text: value.to_s)
       end

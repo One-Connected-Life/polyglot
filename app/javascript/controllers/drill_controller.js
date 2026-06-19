@@ -1,12 +1,19 @@
 import { Controller } from "@hotwired/stimulus"
 
+// ISO 639-1 -> BCP-47 so the browser picks the right voice.
+const LANG_TAGS = {
+  en: "en-GB", nl: "nl-NL", es: "es-ES", fr: "fr-FR", it: "it-IT", ro: "ro-RO", ru: "ru-RU",
+}
+
+const DIFFICULTY_METER = { easy: "● ○ ○", medium: "● ● ○", hard: "● ● ●" }
+
 // Keyboard-driven drill. Prompt -> type -> Enter checks -> arrows/Space/Enter move.
 // Keys are handled on window (not the input) so navigation works after the input
 // is locked on reveal. Cards arrive as JSON, graded in-browser — no round-trip.
 export default class extends Controller {
   static targets = [
-    "prompt", "input", "feedback", "answer", "given",
-    "progress", "score", "bar", "card", "summary", "summaryText", "missed"
+    "prompt", "input", "feedback", "answer", "given", "answerSpeak", "difficulty", "alts",
+    "progress", "score", "bar", "card", "summary", "summaryText", "missed", "auto"
   ]
   static values = { cards: Array, from: String, to: String, recordUrl: String }
 
@@ -14,6 +21,8 @@ export default class extends Controller {
     this.cards = this.shuffle([...this.cardsValue])
     this.results = this.cards.map(() => ({ graded: false, correct: false, given: "" }))
     this.index = 0
+    this.autoOn = localStorage.getItem("drill-autoplay") === "1"
+    if (this.hasAutoTarget) this.autoTarget.checked = this.autoOn
     this.onKey = this.onKey.bind(this)
     window.addEventListener("keydown", this.onKey)
     this.render()
@@ -49,22 +58,11 @@ export default class extends Controller {
     const card = this.cards[this.index]
     const result = this.results[this.index]
     result.given = this.inputTarget.value
-    result.correct = this.normalize(result.given) === this.normalize(card.answer)
+    const accepted = (card.accept && card.accept.length ? card.accept : [card.answer]).map((a) => this.normalize(a))
+    result.correct = accepted.includes(this.normalize(result.given))
     result.graded = true
     this.record(card.id, result.correct, result.given)
     this.render()
-  }
-
-  // Fire-and-forget: persist the answer without blocking the drill rhythm.
-  record(termId, correct, given) {
-    if (!this.hasRecordUrlValue || !this.recordUrlValue) return
-    const token = document.querySelector('meta[name="csrf-token"]')?.content
-    fetch(this.recordUrlValue, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-CSRF-Token": token || "" },
-      body: JSON.stringify({ term_id: termId, from: this.fromValue, to: this.toValue, correct, given }),
-      keepalive: true,
-    }).catch(() => {})
   }
 
   next() {
@@ -100,6 +98,9 @@ export default class extends Controller {
         : "text-sm font-medium text-rose-600 dark:text-rose-400"
       this.answerTarget.textContent = full
       this.answerTarget.classList.remove("invisible")
+      if (this.hasAnswerSpeakTarget) this.answerSpeakTarget.classList.remove("hidden")
+      this.showDifficulty(card.difficulty)
+      this.showAlts(card)
 
       if (!result.correct && this.normalize(result.given) !== "") {
         this.givenTarget.textContent = `you typed: ${result.given}`
@@ -114,7 +115,11 @@ export default class extends Controller {
       this.answerTarget.textContent = ""
       this.answerTarget.classList.add("invisible")
       this.givenTarget.classList.add("hidden")
+      if (this.hasAnswerSpeakTarget) this.answerSpeakTarget.classList.add("hidden")
+      if (this.hasDifficultyTarget) this.difficultyTarget.textContent = ""
+      if (this.hasAltsTarget) this.altsTarget.textContent = ""
       this.inputTarget.focus()
+      if (this.autoOn) this.speakPrompt()
     }
   }
 
@@ -123,7 +128,7 @@ export default class extends Controller {
     const pct = Math.round((correct / this.cards.length) * 100)
     const missed = this.cards
       .filter((_, i) => this.results[i].graded && !this.results[i].correct)
-      .map((c, i) => c.prompt)
+      .map((c) => c.prompt)
 
     this.summaryTextTarget.textContent = `${correct} / ${this.cards.length} correct (${pct}%)`
     this.missedTarget.textContent = missed.length ? `Missed: ${missed.join(", ")}` : "Clean run — nothing missed."
@@ -142,6 +147,50 @@ export default class extends Controller {
     const correct = this.results.filter((r) => r.correct).length
     const graded = this.results.filter((r) => r.graded).length
     this.scoreTarget.textContent = graded ? `${correct}/${graded}` : ""
+  }
+
+  showDifficulty(level) {
+    if (!this.hasDifficultyTarget) return
+    this.difficultyTarget.textContent = DIFFICULTY_METER[level] ? `${DIFFICULTY_METER[level]}  ${level}` : ""
+  }
+
+  showAlts(card) {
+    if (!this.hasAltsTarget) return
+    const extra = (card.accept || []).filter((a) => this.normalize(a) !== this.normalize(card.answer))
+    this.altsTarget.textContent = extra.length ? `also accepted: ${extra.join(", ")}` : ""
+  }
+
+  // --- speech (browser TTS, no backend) ---
+
+  toggleAuto() {
+    this.autoOn = this.autoTarget.checked
+    localStorage.setItem("drill-autoplay", this.autoOn ? "1" : "0")
+    if (this.autoOn) this.speakPrompt()
+  }
+
+  speakPrompt() { this.speak(this.cards[this.index].prompt, this.fromValue) }
+  speakAnswer() { this.speak(this.cards[this.index].answer, this.toValue) }
+
+  speak(text, code) {
+    if (!("speechSynthesis" in window) || !text) return
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = LANG_TAGS[code] || code
+    window.speechSynthesis.cancel()
+    window.speechSynthesis.speak(utterance)
+  }
+
+  // --- persistence ---
+
+  // Fire-and-forget: persist the answer without blocking the drill rhythm.
+  record(termId, correct, given) {
+    if (!this.hasRecordUrlValue || !this.recordUrlValue) return
+    const token = document.querySelector('meta[name="csrf-token"]')?.content
+    fetch(this.recordUrlValue, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CSRF-Token": token || "" },
+      body: JSON.stringify({ term_id: termId, from: this.fromValue, to: this.toValue, correct, given }),
+      keepalive: true,
+    }).catch(() => {})
   }
 
   // Forgiving compare: case/whitespace/diacritics-insensitive, ignores leading articles.

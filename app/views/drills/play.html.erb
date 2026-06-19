@@ -2,8 +2,14 @@
 
 <% if @cards.empty? %>
   <p class="text-sm text-gray-500 dark:text-gray-400">
-    No <%= Translation::LANGUAGES[@from] %> → <%= Translation::LANGUAGES[@to] %> pairs in this deck yet.
-    <%= link_to "Back to decks", root_path, class: "underline" %>
+    <% if @skip_easy %>
+      No <span class="font-medium">harder</span> <%= Translation::LANGUAGES[@from] %> → <%= Translation::LANGUAGES[@to] %> words here —
+      <%= link_to "show easy ones too", play_path(deck: @deck_slug, from: @from, to: @to, skip_easy: "0"), class: "underline" %>
+      or <%= link_to "back to decks", root_path, class: "underline" %>.
+    <% else %>
+      No <%= Translation::LANGUAGES[@from] %> → <%= Translation::LANGUAGES[@to] %> pairs in this deck yet.
+      <%= link_to "Back to decks", root_path, class: "underline" %>
+    <% end %>
   </p>
 <% else %>
   <div data-controller="drill"
@@ -11,14 +17,25 @@
        data-drill-from-value="<%= @from %>"
        data-drill-to-value="<%= @to %>"
        data-drill-record-url-value="<%= attempts_path %>">
-    <header class="mb-6 flex items-start justify-between">
+    <header class="mb-6 flex items-start justify-between gap-4">
       <div>
         <%= link_to "← decks", root_path, class: "text-xs text-gray-500 hover:underline dark:text-gray-400" %>
         <h1 class="mt-1 text-lg font-semibold"><%= @title %></h1>
       </div>
-      <div class="text-right text-xs text-gray-500 dark:text-gray-400">
-        <div><%= Translation::LANGUAGES[@from] %> → <%= Translation::LANGUAGES[@to] %></div>
-        <%= link_to "⇄ swap", play_path(deck: @deck_slug, from: @to, to: @from), class: "hover:underline" %>
+      <div class="space-y-1 text-right text-xs text-gray-500 dark:text-gray-400">
+        <div>
+          <%= Translation::LANGUAGES[@from] %> → <%= Translation::LANGUAGES[@to] %> ·
+          <%= link_to "⇄ swap", play_path(deck: @deck_slug, from: @to, to: @from, skip_easy: @skip_easy ? "1" : "0"), class: "hover:underline" %>
+        </div>
+        <div>
+          <%= link_to (@skip_easy ? "easy cognates: hidden" : "easy cognates: shown"),
+                play_path(deck: @deck_slug, from: @from, to: @to, skip_easy: @skip_easy ? "0" : "1"),
+                class: "hover:underline" %>
+        </div>
+        <label class="inline-flex cursor-pointer items-center gap-1">
+          <input type="checkbox" data-drill-target="auto" data-action="change->drill#toggleAuto" class="accent-gray-700">
+          🔊 auto-play prompt
+        </label>
       </div>
     </header>
 
@@ -31,9 +48,13 @@
         <div data-drill-target="bar" class="h-full bg-gray-900 transition-all duration-200 dark:bg-gray-100" style="width:0%"></div>
       </div>
 
-      <div class="pt-12 pb-6 text-center">
+      <div class="pt-12 pb-4 text-center">
         <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-400"><%= Translation::LANGUAGES[@from] %></p>
         <p data-drill-target="prompt" class="mt-2 text-4xl font-semibold tracking-tight sm:text-5xl"></p>
+        <button type="button" data-action="drill#speakPrompt"
+                class="mt-3 inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200">
+          🔊 hear it
+        </button>
       </div>
 
       <input data-drill-target="input" type="text"
@@ -41,10 +62,18 @@
              placeholder="<%= Translation::LANGUAGES[@to].downcase %>…"
              class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-xl outline-none focus:border-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-gray-300">
 
-      <div class="mt-4 min-h-[3.5rem] text-center">
+      <div class="mt-4 min-h-[4.5rem] text-center">
         <span data-drill-target="feedback" class="text-sm"></span>
-        <span data-drill-target="answer" class="invisible mt-1 block text-lg font-medium"></span>
-        <span data-drill-target="given" class="hidden text-xs text-gray-400"></span>
+        <p class="mt-1">
+          <span data-drill-target="answer" class="invisible text-lg font-medium align-middle"></span>
+          <button type="button" data-drill-target="answerSpeak" data-action="drill#speakAnswer"
+                  class="ml-1 hidden align-middle rounded-md px-1.5 py-0.5 text-xs text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200">
+            🔊
+          </button>
+        </p>
+        <p data-drill-target="alts" class="text-xs text-gray-500 dark:text-gray-400"></p>
+        <p data-drill-target="given" class="hidden text-xs text-gray-400"></p>
+        <p data-drill-target="difficulty" class="mt-1 text-[11px] tracking-wide text-gray-400"></p>
       </div>
 
       <p class="mt-6 text-center text-[11px] text-gray-400">
