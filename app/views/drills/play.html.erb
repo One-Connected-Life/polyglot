@@ -2,7 +2,7 @@
 
 <% if @cards.empty? %>
   <div class="text-sm text-gray-500 dark:text-gray-400">
-    <p>Nothing to drill here right now<%= " — they're all resting (mastered for now)" if @hide_mastered %>.</p>
+    <p>Nothing to drill here right now<%= " — they're all resting or retired" if defined?(@hide_mastered) && @hide_mastered %>.</p>
     <div class="mt-2 flex flex-wrap gap-3">
       <% if @hide_mastered %>
         <%= link_to "show mastered", play_path(deck: @deck_slug, from: @from, to: @to, hide_mastered: "0"), class: "underline" %>
@@ -20,7 +20,8 @@
        data-drill-from-value="<%= @from %>"
        data-drill-to-value="<%= @to %>"
        data-drill-multi-value="<%= @multi ? 'true' : 'false' %>"
-       data-drill-record-url-value="<%= attempts_path %>">
+       data-drill-record-url-value="<%= attempts_path %>"
+       data-drill-fsrs-enabled-value="<%= ENV['FSRS_ENABLED'] == '1' %>">
 
     <header class="mb-6 flex items-start justify-between gap-4">
       <div>
@@ -63,9 +64,27 @@
       </div>
     </header>
 
+    <%# "owned" toast — small pill, auto-dismisses (legacy path + FSRS non-retire moments) %>
     <div data-drill-target="celebrate" class="pointer-events-none fixed inset-x-0 top-12 z-50 hidden justify-center px-4">
       <div class="rounded-full border border-emerald-300 bg-emerald-50 px-5 py-2 text-sm font-medium text-emerald-700 shadow-sm dark:border-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
         <span data-drill-target="celebrateText"></span>
+      </div>
+    </div>
+
+    <%# FSRS retire overlay — quieter and grander than the "owned" pill.
+        Centered card, backdrop blur, emerald border; no confetti.
+        Auto-dismisses after 2.8 s; drill flows to next card. (#axis-4) %>
+    <div data-drill-target="retireOverlay"
+         class="pointer-events-none fixed inset-0 z-50 hidden items-center justify-center bg-white/60 px-6 backdrop-blur-sm dark:bg-gray-950/70">
+      <div data-drill-target="retireBubble"
+           class="rounded-2xl border border-emerald-300 bg-white px-8 py-6 text-center shadow-sm dark:border-emerald-700 dark:bg-gray-900">
+        <p class="text-3xl" aria-hidden="true">🎓</p>
+        <p class="mt-2 text-base font-semibold text-emerald-700 dark:text-emerald-300">Retired</p>
+        <p class="mt-1 text-lg font-medium dark:text-gray-100" data-drill-target="retireWord"></p>
+        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+          You'll recall this ~6 months out. It's leaving your rotation —
+          you've earned the space.
+        </p>
       </div>
     </div>
 

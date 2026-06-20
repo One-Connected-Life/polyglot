@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_20_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_20_100002) do
   create_table "attempts", force: :cascade do |t|
     t.boolean "correct", default: false, null: false
     t.datetime "created_at", null: false
@@ -36,6 +36,32 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_20_100000) do
     t.integer "user_id"
     t.index ["user_id", "slug"], name: "index_decks_on_user_id_and_slug", unique: true
     t.index ["user_id"], name: "index_decks_on_user_id"
+  end
+
+  create_table "schedulings", force: :cascade do |t|
+    t.boolean "archived", default: false, null: false
+    t.boolean "backfilled", default: false, null: false
+    t.datetime "created_at", null: false
+    t.float "difficulty", default: 0.0, null: false
+    t.datetime "due"
+    t.integer "ease", default: 3, null: false
+    t.integer "elapsed_days", default: 0, null: false
+    t.string "from_language", null: false
+    t.integer "lapses", default: 0, null: false
+    t.datetime "last_review"
+    t.integer "reps", default: 0, null: false
+    t.integer "scheduled_days", default: 0, null: false
+    t.float "stability", default: 0.0, null: false
+    t.integer "state", default: 0, null: false
+    t.integer "term_id", null: false
+    t.string "to_language", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["term_id"], name: "index_schedulings_on_term_id"
+    t.index ["user_id", "due"], name: "index_schedulings_on_user_due"
+    t.index ["user_id", "ease"], name: "index_schedulings_on_user_ease"
+    t.index ["user_id", "term_id", "from_language", "to_language"], name: "index_schedulings_on_user_term_direction", unique: true
+    t.index ["user_id"], name: "index_schedulings_on_user_id"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -89,6 +115,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_20_100000) do
   add_foreign_key "attempts", "terms"
   add_foreign_key "attempts", "users"
   add_foreign_key "decks", "users"
+  add_foreign_key "schedulings", "terms"
+  add_foreign_key "schedulings", "users"
   add_foreign_key "sessions", "users"
   add_foreign_key "terms", "decks"
   add_foreign_key "translations", "terms"

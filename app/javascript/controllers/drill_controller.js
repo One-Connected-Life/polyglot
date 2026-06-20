@@ -27,8 +27,11 @@ export default class extends Controller {
     "multiCheck", "multiNext", "celebrateText", "celebrate",
     // PHONETICS: containers for IPA + translit under the prompt and answer words
     "promptPhonetics", "answerPhonetics",
+    // FSRS retire targets — the bigger "Retired" overlay (#axis-4).
+    // Only present when FSRS_ENABLED=1; guarded with hasRetireOverlayTarget.
+    "retireOverlay", "retireBubble", "retireWord",
   ]
-  static values = { cards: Array, sentences: Array, from: String, to: String, recordUrl: String, multi: Boolean }
+  static values = { cards: Array, sentences: Array, from: String, to: String, recordUrl: String, multi: Boolean, fsrsEnabled: Boolean }
 
   connect() {
     this.cards = this.buildSequence(this.cardsValue, this.hasSentencesValue ? this.sentencesValue : [])
@@ -159,7 +162,16 @@ export default class extends Controller {
     this.render()
 
     if (result.correct) {
-      saved.then((data) => { if (data && data.newly_owned) this.celebrate(card) })
+      saved.then((data) => {
+        if (!data) return
+        // FSRS path: fire the bigger "retired" overlay at the crossing moment.
+        if (data.newly_retired) {
+          this.celebrateRetire(card)
+        } else if (data.newly_owned) {
+          // Legacy path: small "owned" pill.
+          this.celebrate(card)
+        }
+      })
     } else if (this.autoWrongOn) {
       this.speakAnswer()
     }
@@ -523,19 +535,35 @@ export default class extends Controller {
     this.altsTarget.textContent = extra.length ? `also accepted: ${extra.join(", ")}` : ""
   }
 
-  // A short celebration when a word crosses into the owned collection.
-  celebrateCard(card) {
+  // A short celebration when a word crosses into the owned collection (legacy path).
+  celebrate(card) {
     this.ownedThisRun++
     if (!this.hasCelebrateTarget) return
     this.celebrateTextTarget.textContent = `🎉 Owned! "${card.prompt}" is in your collection`
     const el = this.celebrateTarget
     const bubble = el.firstElementChild
-    el.classList.remove("hidden"); el.classList.add("flex")
-    bubble.classList.remove("animate-celebrate")
+    el.classList.remove(“hidden”); el.classList.add(“flex”)
+    bubble.classList.remove(“animate-celebrate”)
     void bubble.offsetWidth // restart the animation
-    bubble.classList.add("animate-celebrate")
+    bubble.classList.add(“animate-celebrate”)
     clearTimeout(this._celebrateTimer)
-    this._celebrateTimer = setTimeout(() => { el.classList.add("hidden"); el.classList.remove("flex") }, 2000)
+    this._celebrateTimer = setTimeout(() => { el.classList.add(“hidden”); el.classList.remove(“flex”) }, 2000)
+  }
+
+  // FSRS retire celebration — quieter and grander than the “owned” pill.
+  // Centered card overlay, backdrop blur, emerald border; no confetti.
+  // Auto-dismisses after 2.8 s; drill flows on to the next card. (#axis-4)
+  celebrateRetire(card) {
+    this.ownedThisRun++
+    if (!this.hasRetireOverlayTarget) return
+    const word = card.answer_article ? `${card.answer_article} ${card.answer}` : card.answer
+    if (this.hasRetireWordTarget) this.retireWordTarget.textContent = `”${word}”`
+    const el = this.retireOverlayTarget
+    el.classList.remove(“hidden”); el.classList.add(“flex”)
+    clearTimeout(this._retireTimer)
+    this._retireTimer = setTimeout(() => {
+      el.classList.add(“hidden”); el.classList.remove(“flex”)
+    }, 2800)
   }
 
   // --- speech (browser TTS, no backend) ---

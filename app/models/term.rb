@@ -2,6 +2,7 @@ class Term < ApplicationRecord
   belongs_to :deck
   has_many :translations, dependent: :destroy
   has_many :attempts, dependent: :destroy
+  has_many :schedulings, dependent: :destroy  # FSRS cache rows (#axis-4)
 
   accepts_nested_attributes_for :translations
 

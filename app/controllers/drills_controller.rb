@@ -1,8 +1,8 @@
 class DrillsController < ApplicationController
   def home
-    @decks = current_user.decks.includes(:terms).order(:position)
+    @decks       = current_user.decks.includes(:terms).order(:position)
     @miss_counts = current_user.attempts.miss_counts(langs: current_user.drillable_languages)
-    @word_count = current_user.terms.where(kind: "word").count
+    @word_count  = current_user.terms.where(kind: "word").count
   end
 
   def play
@@ -11,10 +11,6 @@ class DrillsController < ApplicationController
 
     session[:skip_easy] = params[:skip_easy] == "1" if params.key?(:skip_easy)
     @skip_easy = session[:skip_easy] || false
-
-    # Rest mastered words (2x correct -> 7 days, 3x+ -> 14 days). Sticky, on by default.
-    session[:hide_mastered] = params[:hide_mastered] == "1" if params.key?(:hide_mastered)
-    @hide_mastered = session.key?(:hide_mastered) ? session[:hide_mastered] : true
 
     # Multi-language drill: source → N targets in a sequential-reveal card.
     # Activated when multi=1 is in the params (set from the home deck picker).
@@ -26,11 +22,13 @@ class DrillsController < ApplicationController
       @target_langs = @target_langs.shuffle if current_user.drill_direction == "random"
     end
 
-    resting = @hide_mastered ? current_user.attempts.resting_term_ids(from: @from, to: @to) : []
-
-    terms = select_terms(params[:deck]).includes(:translations).to_a
-    terms.select! { |t| t.difficulty(@from, @to) != :easy } if @skip_easy && !@multi
-    terms.reject! { |t| resting.include?(t.id) } unless @deck_slug == "misses"
+    # Term selection: FSRS scheduling when the flag is on, else the legacy resting
+    # logic. Both set @terms + @excluded_ids (see the terms/excluded_ids helpers).
+    if fsrs_enabled?
+      play_fsrs
+    else
+      play_legacy
+    end
 
     if @multi
       # One card per concept; targets array inside each card drives the JS loop.
@@ -45,13 +43,71 @@ class DrillsController < ApplicationController
           []
         else
           pool = current_user.terms.where(kind: "sentence").includes(:translations).to_a
-          pool.reject! { |t| resting.include?(t.id) }
+          pool.reject! { |t| excluded_ids.include?(t.id) }
           pool.filter_map { |t| build_card(t) }
         end
     end
   end
 
   private
+
+  # ── FSRS path (feature flag on) ───────────────────────────────────────────
+  #
+  # Selects terms via scheduling.due_now instead of the bespoke resting logic.
+  # Auto-skips ease=1 (English cognates) — supersedes the old skip_easy toggle.
+  #
+  # DRILL-CORE RECONCILIATION NOTE: sets @terms and @excluded_ids.
+  # The legacy path also sets these so the shared build path below works.
+  def play_fsrs
+    base_terms = select_terms(params[:deck]).includes(:translations, :schedulings)
+
+    # Pre-fill ease for any terms without a scheduling row yet.
+    new_terms = base_terms.select { |t| t.schedulings.none? { |s| s.user_id == current_user.id } }
+    EasePrefillService.new(current_user).upsert_ease!(new_terms) if new_terms.any?
+
+    due_term_ids = current_user.schedulings
+                               .due_now(from: @from, to: @to)
+                               .pluck(:term_id)
+                               .to_set
+
+    # ease=1 cognates are auto-excluded (English cognate skip — #axis-4).
+    cognate_ids = current_user.schedulings
+                              .where(from_language: @from, to_language: @to, ease: 1)
+                              .pluck(:term_id)
+                              .to_set
+
+    # Archived words are permanently out (user said "done forever").
+    archived_ids = current_user.schedulings
+                               .where(from_language: @from, to_language: @to, archived: true)
+                               .pluck(:term_id)
+                               .to_set
+
+    @excluded_ids = cognate_ids | archived_ids
+    @terms = base_terms.select { |t| due_term_ids.include?(t.id) && !@excluded_ids.include?(t.id) }
+  end
+
+  # ── legacy path (feature flag off) ────────────────────────────────────────
+  def play_legacy
+    session[:hide_mastered] = params[:hide_mastered] == "1" if params.key?(:hide_mastered)
+    @hide_mastered = session.key?(:hide_mastered) ? session[:hide_mastered] : true
+    resting = @hide_mastered ? current_user.attempts.resting_term_ids(from: @from, to: @to) : []
+
+    base_terms = select_terms(params[:deck]).includes(:translations).to_a
+    base_terms.select! { |t| t.difficulty(@from, @to) != :easy } if @skip_easy
+
+    @excluded_ids = resting.to_set
+    @terms = base_terms.reject { |t| @excluded_ids.include?(t.id) && @deck_slug != "misses" }
+  end
+
+  def terms
+    @terms || []
+  end
+
+  def excluded_ids
+    @excluded_ids || Set.new
+  end
+
+  # ── shared helpers ─────────────────────────────────────────────────────────
 
   # Target/source first, then any other languages present (for the reveal panel).
   def lang_order
@@ -136,17 +192,17 @@ class DrillsController < ApplicationController
   def select_terms(deck_param)
     case deck_param
     when "misses"
-      @title = "Your misses"
+      @title     = "Your misses"
       @deck_slug = "misses"
       current_user.terms.where(id: current_user.attempts.missed_term_ids(from: @from, to: @to))
     when "all", nil, ""
-      @title = "All words"
+      @title     = "All words"
       @deck_slug = "all"
       current_user.terms.where(kind: "word").order(:deck_id, :position)
     else
-      @deck = current_user.decks.find_by!(slug: deck_param)
-      @title = @deck.name
-      @deck_slug = @deck.slug
+      @deck            = current_user.decks.find_by!(slug: deck_param)
+      @title           = @deck.name
+      @deck_slug       = @deck.slug
       @is_sentence_deck = @deck.terms.exists?(kind: "sentence")
       @deck.terms
     end
@@ -155,5 +211,11 @@ class DrillsController < ApplicationController
   # Only let valid app languages drive the drill; fall back otherwise.
   def surfaced_lang(value, fallback)
     Translation::LANGUAGES.key?(value) ? value : (fallback || "en")
+  end
+
+  # FSRS_ENABLED env var gates the new scheduling path, drill-by-drill.
+  # Set FSRS_ENABLED=1 in .env (development) or as a server env var (production).
+  def fsrs_enabled?
+    ENV["FSRS_ENABLED"].to_s == "1"
   end
 end
