@@ -30,4 +30,18 @@ FactoryBot.define do
     to_language { "en" }
     correct { true }
   end
+
+  # FSRS scheduling cache row (#axis-4).
+  factory :scheduling do
+    user
+    term
+    from_language { "nl" }
+    to_language   { "en" }
+    ease          { 3 }
+    state         { 0 }   # Fsrs::State::NEW
+    stability     { 0.0 }
+    difficulty    { 0.0 }
+    backfilled    { false }
+    archived      { false }
+  end
 end

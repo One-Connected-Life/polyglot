@@ -4,13 +4,77 @@
   <%= link_to "← decks", root_path, class: "text-xs text-gray-500 hover:underline dark:text-gray-400" %>
   <h1 class="mt-1 text-2xl font-semibold tracking-tight">Your words</h1>
   <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 tabular-nums">
-    <%= @totals[:attempts] %> attempts · <%= @totals[:correct] %> correct · <%= @totals[:owned] %> owned (≥2 right)
+    <%= @totals[:attempts] %> attempts · <%= @totals[:correct] %> correct · <%= @totals[:owned] %> owned (≥2 right)<% if @fsrs_enabled && @totals[:retired] > 0 %> · <%= @totals[:retired] %> retired<% end %>
   </p>
 </header>
 
 <% if @totals[:attempts].zero? %>
   <p class="text-sm text-gray-500 dark:text-gray-400">No attempts yet — drill a deck and they'll show up here.</p>
 <% else %>
+
+  <%# ── Retired shelf (FSRS only) ──────────────────────────────────────── %>
+  <% if @fsrs_enabled && @retired_words.any? %>
+    <section class="mb-10" aria-label="Retired words">
+      <div class="mb-2 flex items-baseline justify-between">
+        <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Retired</p>
+        <p class="text-[11px] tabular-nums text-gray-400"><%= @retired_words.size %> mastered</p>
+      </div>
+      <ul class="divide-y divide-gray-100 rounded-lg border border-gray-200 dark:divide-gray-800 dark:border-gray-800">
+        <% @retired_words.each do |term| %>
+          <% sched = @retired_schedulings[term.id] %>
+          <li class="flex items-center justify-between px-3 py-2">
+            <div class="flex items-baseline gap-3">
+              <span class="text-emerald-500 dark:text-emerald-400" aria-hidden="true">🎓</span>
+              <span class="font-medium"><%= term.translation(@target)&.text %></span>
+              <span class="text-sm text-gray-500 dark:text-gray-400"><%= term.translation(@source)&.text %></span>
+            </div>
+            <div class="flex items-baseline gap-4 text-[11px] tabular-nums text-gray-400">
+              <% if sched %>
+                <span>recall ~<%= sched.recall_months %> mo</span>
+                <button
+                  data-turbo-method="patch"
+                  data-turbo-confirm="Un-retire this word and bring it back to drilling?"
+                  formaction="<%= term_path(term, scheduling_action: 'unretire') %>"
+                  class="text-[11px] text-gray-400 hover:underline hover:text-gray-600 dark:hover:text-gray-300">
+                  un-retire
+                </button>
+              <% end %>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+      <p class="mt-2 text-[11px] text-gray-400">
+        These words resurface automatically at long intervals. Tap <em>un-retire</em> to bring one back sooner.
+      </p>
+    </section>
+  <% end %>
+
+  <%# ── Approaching retirement (FSRS only) ─────────────────────────────── %>
+  <% if @fsrs_enabled && @approaching_words.any? %>
+    <section class="mb-8" aria-label="Approaching retirement">
+      <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Almost there</p>
+      <ul class="divide-y divide-gray-100 dark:divide-gray-800">
+        <% @approaching_words.each do |term| %>
+          <% sched = @approaching_schedulings[term.id] %>
+          <% pct = sched ? [(sched.stability / Mastery::RETIRE_STABILITY_DAYS * 100).round, 100].min : 0 %>
+          <li class="px-1 py-2">
+            <div class="flex items-baseline justify-between">
+              <div class="flex items-baseline gap-3">
+                <span class="font-medium"><%= term.translation(@target)&.text %></span>
+                <span class="text-sm text-gray-500 dark:text-gray-400"><%= term.translation(@source)&.text %></span>
+              </div>
+              <span class="text-[11px] tabular-nums text-gray-400"><%= pct %>% to retired</span>
+            </div>
+            <div class="mt-1.5 h-0.5 w-full rounded-full bg-gray-100 dark:bg-gray-800">
+              <div class="h-0.5 rounded-full bg-emerald-400/70 dark:bg-emerald-500/60" style="width: <%= pct %>%"></div>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+    </section>
+  <% end %>
+
+  <%# ── Active words table ──────────────────────────────────────────────── %>
   <table class="w-full text-sm">
     <thead>
       <tr class="border-b border-gray-200 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:text-gray-400">
@@ -22,7 +86,7 @@
       </tr>
     </thead>
     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-      <% @words.each do |term| %>
+      <% @active_words.each do |term| %>
         <% t2s = @summary[[term.id, @target, @source]] %>
         <% s2t = @summary[[term.id, @source, @target]] %>
         <% status = word_status(term) %>
