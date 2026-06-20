@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_19_212000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_20_061711) do
   create_table "attempts", force: :cascade do |t|
     t.boolean "correct", default: false, null: false
     t.datetime "created_at", null: false
@@ -61,7 +61,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_19_212000) do
     t.string "alternates"
     t.string "article"
     t.datetime "created_at", null: false
+    t.text "etymology"
     t.string "language", null: false
+    t.text "mnemonic"
     t.integer "term_id", null: false
     t.string "text", null: false
     t.datetime "updated_at", null: false

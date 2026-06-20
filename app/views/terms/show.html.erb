@@ -27,6 +27,24 @@
   <% if meter %>
     <p class="mt-4 text-[11px] tracking-wide text-gray-400"><%= meter %>&nbsp;&nbsp;<%= @term.difficulty %><span class="ml-1 text-gray-400">· vs English</span></p>
   <% end %>
+
+  <%# Etymology + mnemonic: quiet annotation below the main word block. Only shown when at least one is present. %>
+  <% target_t = nl %> <%# target-language row carries etymology/mnemonic %>
+  <% if target_t&.etymology.present? || target_t&.mnemonic.present? %>
+    <div class="mt-5 border-t border-gray-100 pt-4 dark:border-gray-800">
+      <% if target_t.etymology.present? %>
+        <p class="text-sm text-gray-400 dark:text-gray-500">
+          <span class="font-medium text-gray-500 dark:text-gray-400">from:</span>
+          <%= target_t.etymology %>
+        </p>
+      <% end %>
+      <% if target_t.mnemonic.present? %>
+        <p class="<%= target_t.etymology.present? ? "mt-1" : "" %> text-sm text-gray-400 dark:text-gray-500">
+          💡 <%= target_t.mnemonic %>
+        </p>
+      <% end %>
+    </div>
+  <% end %>
 </div>
 
 <% others = (Translation::LANGUAGES.keys - Translation::SURFACED).filter_map { |code| [code, @term.translation(code)] if @term.translation(code) } %>

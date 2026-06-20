@@ -205,7 +205,7 @@ export default class extends Controller {
   renderDetail(card) {
     if (!this.hasDetailTarget) return
     const esc = (s) => (s || "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]))
-    this.detailTarget.innerHTML = (card.translations || []).map((t) => {
+    const translationsHtml = (card.translations || []).map((t) => {
       const surfaced = t.lang === this.fromValue || t.lang === this.toValue
       return `<div class="flex items-center justify-between py-1.5">
         <div class="flex items-baseline gap-3">
@@ -215,6 +215,18 @@ export default class extends Controller {
         <button type="button" data-controller="speak" data-speak-text-value="${esc(t.text)}" data-speak-lang-value="${esc(t.lang)}" data-action="speak#say" class="rounded-md px-2 py-1 text-sm text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200" aria-label="pronounce">🔊</button>
       </div>`
     }).join("")
+
+    // [ETYMOLOGY] Quiet annotation below the translation list — only when present.
+    const { etymology, mnemonic } = card
+    let etymologyHtml = ""
+    if (etymology || mnemonic) {
+      etymologyHtml = `<div class="mt-2 border-t border-gray-100 pt-2 dark:border-gray-800">`
+      if (etymology) etymologyHtml += `<p class="text-xs text-gray-400 dark:text-gray-500"><span class="font-medium text-gray-500 dark:text-gray-400">from:</span> ${esc(etymology)}</p>`
+      if (mnemonic)  etymologyHtml += `<p class="${etymology ? "mt-0.5" : ""} text-xs text-gray-400 dark:text-gray-500">💡 ${esc(mnemonic)}</p>`
+      etymologyHtml += `</div>`
+    }
+
+    this.detailTarget.innerHTML = translationsHtml + etymologyHtml
     this.detailTarget.classList.remove("hidden")
   }
 

@@ -39,11 +39,13 @@ class DeckGenerator
       for a learner whose base language is #{source}.
 
       Return a JSON array. Each element is an object:
-        {"target": "<the word in #{target}>", "source": "<its #{source} translation>", "article": "<the definite article in #{target} if this is a noun that takes one, otherwise null>"}
+        {"target": "<the word in #{target}>", "source": "<its #{source} translation>", "article": "<the definite article in #{target} if this is a noun that takes one, otherwise null>", "etymology": "<short factual origin of the #{target} word>", "mnemonic": "<a one-line memory hook in #{source}>"}
 
       Rules: beginner-to-intermediate, real and natural words, no duplicates, no proper nouns.
       Set "article" correctly for #{target} (e.g. Dutch de/het, German der/die/das, French le/la); use null when the language or the word takes none.
       Do NOT include the article inside the "target" value — the bare word goes in "target", the article only in "article".
+      "etymology": factual origin in ≤12 words. For a compound, break it into its parts and their literal meanings (e.g. "ziek (sick) + huis (house)"). Plain text, no "From..." preamble. Use null if you don't actually know.
+      "mnemonic": one short memory hook in #{source} that helps recall the #{target} word — a sound-alike, image, or literal-parts link. ≤12 words, no filler. Use null if nothing genuinely helpful comes to mind.
     PROMPT
 
     response = post_message(system, prompt)
@@ -110,7 +112,10 @@ class DeckGenerator
         seen << key
 
         term = @deck.terms.create!(kind: "word", position: (position += 1))
-        term.translations.create!(language: target, text: t, article: article)
+        term.translations.create!(
+          language: target, text: t, article: article,
+          etymology: w["etymology"].presence, mnemonic: w["mnemonic"].presence
+        )
         term.translations.create!(language: source, text: s)
       end
     end

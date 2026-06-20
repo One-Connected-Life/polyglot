@@ -46,6 +46,11 @@ class DrillsController < ApplicationController
     answer = term.translation(@to)
     return nil unless prompt && answer
 
+    # [ETYMOLOGY] The target-language row carries etymology + mnemonic.
+    # We pass @from here because drills typically run target→source (nl→en),
+    # so @from is the language the learner is studying.
+    target_translation = term.translation(@from)
+
     {
       id: term.id,
       kind: term.kind,
@@ -54,6 +59,9 @@ class DrillsController < ApplicationController
       answer_article: answer.article,
       accept: answer.accepted_answers,
       difficulty: (term.kind == "word" ? term.difficulty(@from, @to).to_s : ""),
+      # [ETYMOLOGY] etymology + mnemonic shown on reveal (nil when absent → omit block)
+      etymology: target_translation&.etymology.presence,
+      mnemonic: target_translation&.mnemonic.presence,
       translations: lang_order.filter_map { |code|
         t = term.translation(code)
         { lang: code, text: t.with_article } if t
