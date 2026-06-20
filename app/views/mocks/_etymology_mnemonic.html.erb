@@ -1,0 +1,117 @@
+<%#
+  Etymology & mnemonic mock (#etymology).
+  Frozen frames of the drill reveal card AFTER an answer, with two new quiet lines
+  under the language list: the word's origin, and a one-line memory hook.
+  No JS, no grading — every value is hard-coded stub data. Mirrors the real
+  reveal markup in app/views/drills/play.html.erb + drill_controller renderDetail.
+
+  Why it lives here: opaque words — especially long Dutch compounds — are the
+  hardest to retain. Breaking the word into its literal parts (ziek + huis) and
+  giving one hook is the cheapest possible aid, and it belongs exactly where the
+  learner already sees the answer: the reveal, nowhere else.
+%>
+
+<div class="space-y-16">
+
+  <%# A small replica of just the reveal block of a graded card. %>
+  <% reveal = ->(opts) do %>
+    <div class="mx-auto max-w-sm">
+      <p class="text-center text-sm font-medium text-emerald-600 dark:text-emerald-400">✓ correct</p>
+      <p class="mt-1 text-center text-lg font-medium"><%= opts[:answer] %></p>
+
+      <%# the existing "all languages" list — unchanged %>
+      <div class="mx-auto mt-2 max-w-sm divide-y divide-gray-100 border-t border-gray-100 pt-2 text-left dark:divide-gray-800 dark:border-gray-800">
+        <% opts[:langs].each do |code, text, surfaced| %>
+          <div class="flex items-center justify-between py-1.5">
+            <div class="flex items-baseline gap-3">
+              <span class="w-6 text-[11px] uppercase text-gray-400"><%= code %></span>
+              <span class="text-sm <%= surfaced ? "font-medium" : "text-gray-500 dark:text-gray-400" %>"><%= text %></span>
+            </div>
+            <span class="rounded-md px-2 py-1 text-sm text-gray-400">🔊</span>
+          </div>
+        <% end %>
+      </div>
+
+      <%# NEW: etymology + mnemonic. Quiet, secondary, only rendered when present.
+          A hairline separates them from the language list; no box, no fill. %>
+      <% if opts[:etymology].present? || opts[:mnemonic].present? %>
+        <div class="mx-auto mt-3 max-w-sm border-t border-gray-100 pt-3 text-left dark:border-gray-800">
+          <% if opts[:etymology].present? %>
+            <p class="flex gap-2 text-[13px] leading-snug text-gray-500 dark:text-gray-400">
+              <span class="select-none text-gray-300 dark:text-gray-600">⌗</span>
+              <span><%= opts[:etymology] %></span>
+            </p>
+          <% end %>
+          <% if opts[:mnemonic].present? %>
+            <p class="mt-1.5 flex gap-2 text-[13px] leading-snug text-gray-500 dark:text-gray-400">
+              <span class="select-none text-gray-300 dark:text-gray-600">💡</span>
+              <span><%= opts[:mnemonic] %></span>
+            </p>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# =====================================================================
+      SECTION 1 — the payoff case: a long opaque Dutch compound
+  ====================================================================== %>
+  <section>
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">1 · A long compound — broken into its parts</h2>
+    <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">The hardest words to retain. The origin line splits the compound; the hook makes it stick.</p>
+    <div class="mt-5 rounded-lg border border-gray-200 px-4 py-5 dark:border-gray-800">
+      <%= reveal.call(
+        answer: "het ziekenhuis",
+        langs: [["nl", "het ziekenhuis", true], ["en", "the hospital", true], ["de", "das Krankenhaus", false]],
+        etymology: "ziek (sick) + huis (house) — literally “sick-house”",
+        mnemonic: "A house where the sick go — “zieken-huis.”"
+      ) %>
+    </div>
+  </section>
+
+  <%# =====================================================================
+      SECTION 2 — a sound-alike hook for a non-compound word
+  ====================================================================== %>
+  <section>
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">2 · A plain word — origin + a sound-alike hook</h2>
+    <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Not every word is a compound; here the hook is a sound link instead.</p>
+    <div class="mt-5 rounded-lg border border-gray-200 px-4 py-5 dark:border-gray-800">
+      <%= reveal.call(
+        answer: "de vlinder",
+        langs: [["nl", "de vlinder", true], ["en", "the butterfly", true], ["es", "la mariposa", false]],
+        etymology: "From Middle Dutch vlindern, “to flutter.”",
+        mnemonic: "A butterfly’s wings “flin-der” as they flutter."
+      ) %>
+    </div>
+  </section>
+
+  <%# =====================================================================
+      SECTION 3 — graceful absence: model returned null, nothing shows
+  ====================================================================== %>
+  <section>
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">3 · No hook available — the card stays clean</h2>
+    <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">When the model has no honest etymology or hook, both lines are omitted — no filler, no empty label.</p>
+    <div class="mt-5 rounded-lg border border-gray-200 px-4 py-5 dark:border-gray-800">
+      <%= reveal.call(
+        answer: "de tafel",
+        langs: [["nl", "de tafel", true], ["en", "the table", true], ["fr", "la table", false]],
+        etymology: nil,
+        mnemonic: nil
+      ) %>
+    </div>
+    <p class="mt-2 max-w-md text-[11px] text-gray-400 dark:text-gray-500">A cognate this obvious needs no help — the absence is the right answer, not a gap to fill.</p>
+  </section>
+
+  <%# =====================================================================
+      SECTION 4 — decisions, stated plainly
+  ====================================================================== %>
+  <section class="max-w-2xl">
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Note · choices</h2>
+    <ul class="mt-2 space-y-1.5 text-xs text-gray-500 dark:text-gray-400">
+      <li>· <span class="font-medium text-gray-600 dark:text-gray-300">Stored per-language</span> on the target Translation (next to <code>article</code>), generated once with the deck. The Dutch word’s origin ≠ the English word’s — etymology is genuinely per-language.</li>
+      <li>· <span class="font-medium text-gray-600 dark:text-gray-300">Shown only on reveal</span>, below the answer — never on the prompt, where it would spoil the guess.</li>
+      <li>· <span class="font-medium text-gray-600 dark:text-gray-300">Two lines, both optional.</span> Origin (⌗) and one memory hook (💡). Either can be absent; nothing renders when both are.</li>
+      <li>· <span class="font-medium text-gray-600 dark:text-gray-300">Muted, no box.</span> It supports the answer, it doesn’t compete with it.</li>
+    </ul>
+  </section>
+</div>

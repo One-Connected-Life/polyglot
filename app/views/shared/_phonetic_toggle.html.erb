@@ -1,0 +1,26 @@
+<%#
+  Glossika-style segmented toggle for phonetic notation: IPA / romanized / native.
+  Buttons only swap which transcription is visible (client-side) — they do not
+  reload or change drill state. Canonical segmented-control style for this app;
+  reuse it, don't invent a second pill style.
+
+  Locals:
+    options: array of [value, label] pairs, e.g. [["ipa", "IPA"], ...]
+    selected: the value shown on load
+%>
+<div class="inline-flex rounded-lg border border-gray-200 bg-gray-100 p-0.5 dark:border-gray-800 dark:bg-gray-900"
+     role="group" aria-label="Phonetic notation">
+  <% options.each do |value, label| %>
+    <button type="button"
+            data-phonetics-target="toggle"
+            data-action="phonetics#switch"
+            data-notation="<%= value %>"
+            aria-pressed="<%= value == selected %>"
+            class="rounded-md px-2.5 py-1 text-[11px] font-medium tracking-wide transition
+                   <%= value == selected ?
+                     'bg-white text-gray-900 shadow-sm dark:bg-gray-700 dark:text-gray-100' :
+                     'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200' %>">
+      <%= label %>
+    </button>
+  <% end %>
+</div>

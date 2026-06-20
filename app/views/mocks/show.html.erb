@@ -1,0 +1,8 @@
+<% content_for :title, MocksController::MOCKS[@slug] %>
+
+<div class="mb-6 flex items-center justify-between">
+  <%= link_to "← all mocks", mocks_path, class: "text-xs text-gray-500 hover:underline dark:text-gray-400" %>
+  <span class="rounded border border-dashed border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-700 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-300">mock · stub data</span>
+</div>
+
+<%= render "mocks/#{@slug.tr('-', '_')}" %>

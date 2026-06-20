@@ -1,0 +1,110 @@
+<% content_for :title, "Mock — phonetic transcription" %>
+
+<% notations = [["ipa", "IPA"], ["romanized", "ABC"], ["native", "script"]] %>
+
+<div class="mb-6 rounded-md border border-dashed border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200">
+  <span class="font-semibold">Mock — stub data.</span>
+  Phonetic transcription on the drill prompt + reveal, with a notation toggle.
+  Does not touch the live drill. Sample words are illustrative.
+</div>
+
+<h1 class="mb-1 text-lg font-semibold">Phonetic transcription</h1>
+<p class="mb-8 text-sm text-gray-500 dark:text-gray-400">
+  How it reads on a card. The transcription is quiet support under the word —
+  the prompt still owns the screen. The toggle picks the notation a learner can
+  actually read; it sticks across cards.
+</p>
+
+<%# ============================================================ %>
+<%# 1. THE CARD — prompt with phonetics underneath (resting state) %>
+<%# ============================================================ %>
+<section data-controller="phonetics" class="mb-12">
+  <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">On the prompt</p>
+
+  <div class="rounded-2xl border border-gray-200 px-6 pb-8 pt-10 text-center dark:border-gray-800">
+    <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-400"><%= @sample[:from_name] %></p>
+
+    <p class="mt-2 text-4xl font-semibold tracking-tight sm:text-5xl"><%= @sample[:prompt] %></p>
+
+    <%# Phonetics: muted, smaller than the word, directly beneath it. %>
+    <div class="mt-3">
+      <% @sample[:phonetics].each do |notation, value| %>
+        <p data-phonetics-target="line" data-notation="<%= notation %>"
+           class="text-base text-gray-400 dark:text-gray-500 <%= "hidden" unless notation == "ipa" %>">
+          <%= value %>
+        </p>
+      <% end %>
+    </div>
+
+    <%# The toggle lives with the phonetics, small and unobtrusive. %>
+    <div class="mt-4 flex justify-center">
+      <%= render "shared/phonetic_toggle", options: notations, selected: "ipa" %>
+    </div>
+
+    <button type="button"
+            class="mt-5 inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200">
+      🔊 hear it
+    </button>
+  </div>
+</section>
+
+<%# ============================================================ %>
+<%# 2. ON THE REVEAL — phonetics on the answer too                %>
+<%# ============================================================ %>
+<section data-controller="phonetics" class="mb-12">
+  <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">On the reveal</p>
+
+  <div class="rounded-2xl border border-gray-200 px-6 py-6 text-center dark:border-gray-800">
+    <p class="text-sm font-medium text-emerald-600 dark:text-emerald-400">✓ correct</p>
+    <p class="mt-2 text-lg font-medium"><%= @sample[:answer] %></p>
+
+    <%# The answer keeps its phonetics too, equally muted. %>
+    <div class="mt-1">
+      <% @sample[:phonetics].each do |notation, value| %>
+        <p data-phonetics-target="line" data-notation="<%= notation %>"
+           class="text-sm text-gray-400 dark:text-gray-500 <%= "hidden" unless notation == "ipa" %>">
+          <%= value %>
+        </p>
+      <% end %>
+    </div>
+
+    <div class="mt-3 flex justify-center">
+      <%= render "shared/phonetic_toggle", options: notations, selected: "ipa" %>
+    </div>
+  </div>
+</section>
+
+<%# ============================================================ %>
+<%# 3. WHY THREE NOTATIONS — feel the toggle across scripts       %>
+<%# ============================================================ %>
+<section data-controller="phonetics">
+  <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Why a toggle</p>
+  <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">
+    For a language whose script the learner can't read yet, romanized is the
+    lifeline; IPA is for the precise; native script is for once they're fluent.
+    One choice, applied everywhere.
+  </p>
+
+  <div class="mb-4 flex justify-center">
+    <%= render "shared/phonetic_toggle", options: notations, selected: "ipa" %>
+  </div>
+
+  <div class="divide-y divide-gray-100 dark:divide-gray-800">
+    <% [@sample.slice(:prompt, :from_name, :phonetics), *@sample[:others]].each do |w| %>
+      <div class="flex items-baseline justify-between gap-4 py-2.5">
+        <div class="flex items-baseline gap-3">
+          <span class="w-14 text-[11px] uppercase text-gray-400"><%= w[:from_name] %></span>
+          <span class="text-lg font-medium"><%= w[:prompt] %></span>
+        </div>
+        <div class="text-right">
+          <% w[:phonetics].each do |notation, value| %>
+            <span data-phonetics-target="line" data-notation="<%= notation %>"
+                  class="text-sm text-gray-400 dark:text-gray-500 <%= "hidden" unless notation == "ipa" %>">
+              <%= value %>
+            </span>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</section>

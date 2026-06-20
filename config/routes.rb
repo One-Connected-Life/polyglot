@@ -24,4 +24,11 @@ Rails.application.routes.draw do
 
   # AI-generate a deck from a topic, or remove one.
   resources :decks, only: [:new, :create, :destroy]
+
+  # Owner-only design mocks for the four differentiators (issue #5). Stub data,
+  # no live behavior. Specific routes BEFORE the :slug catch-all.
+  get "mocks", to: "mocks#index", as: :mocks
+  get "mocks/phonetics", to: "mocks#phonetics", as: :mock_phonetics
+  get "mocks/retire", to: "mocks#retire_celebrate", as: :mock_retire
+  get "mocks/:slug", to: "mocks#show", as: :mock
 end

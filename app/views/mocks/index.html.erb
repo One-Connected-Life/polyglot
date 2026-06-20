@@ -1,0 +1,18 @@
+<% content_for :title, "Mocks" %>
+
+<h1 class="text-lg font-semibold tracking-tight">Design mocks</h1>
+<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Owner-gated. Stub data, no live behavior — the four differentiators from issue #5.</p>
+
+<ul class="mt-6 divide-y divide-gray-100 dark:divide-gray-800">
+  <% @mocks.each do |slug, title| %>
+    <li class="py-2">
+      <%= link_to title, mock_path(slug), class: "text-sm hover:underline" %>
+    </li>
+  <% end %>
+  <li class="py-2">
+    <%= link_to @extra["phonetics"], mock_phonetics_path, class: "text-sm hover:underline" %>
+  </li>
+  <li class="py-2">
+    <%= link_to @extra["retire"], mock_retire_path, class: "text-sm hover:underline" %>
+  </li>
+</ul>
