@@ -21,13 +21,17 @@ servers:
   web:
     hosts:
       - 178.104.104.237
-    # proxy: false is REQUIRED — kamal-proxy registration is on by default in
-    # Kamal v2 and would healthcheck container :80 via the shared proxy,
-    # colliding with the neighbours. We publish straight to the host instead.
-    proxy: false
-    options:
-      publish:
-        - "8082:80"
+
+# Route through the shared kamal-proxy (same one oneconnectedlife.org uses on
+# this box). Host-based routing means many apps share :80/:443 without
+# colliding — each registers its own host. The proxy also handles rolling
+# new->old swaps on internal ports, so there's no fixed host-port clash on
+# redeploy (the old `proxy: false` + `8082:80` publish did clash — see
+# reference_language_app_kamal_redeploy_port). kamal-proxy auto-provisions a
+# Let's Encrypt cert for the host below (needs DNS-only A record -> this box).
+proxy:
+  ssl: true
+  host: mynewwords.org
 
 registry:
   server: ghcr.io
