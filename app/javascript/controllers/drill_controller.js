@@ -542,12 +542,12 @@ export default class extends Controller {
     this.celebrateTextTarget.textContent = `🎉 Owned! "${card.prompt}" is in your collection`
     const el = this.celebrateTarget
     const bubble = el.firstElementChild
-    el.classList.remove(“hidden”); el.classList.add(“flex”)
-    bubble.classList.remove(“animate-celebrate”)
+    el.classList.remove("hidden"); el.classList.add("flex")
+    bubble.classList.remove("animate-celebrate")
     void bubble.offsetWidth // restart the animation
-    bubble.classList.add(“animate-celebrate”)
+    bubble.classList.add("animate-celebrate")
     clearTimeout(this._celebrateTimer)
-    this._celebrateTimer = setTimeout(() => { el.classList.add(“hidden”); el.classList.remove(“flex”) }, 2000)
+    this._celebrateTimer = setTimeout(() => { el.classList.add("hidden"); el.classList.remove("flex") }, 2000)
   }
 
   // FSRS retire celebration — quieter and grander than the “owned” pill.
@@ -559,10 +559,10 @@ export default class extends Controller {
     const word = card.answer_article ? `${card.answer_article} ${card.answer}` : card.answer
     if (this.hasRetireWordTarget) this.retireWordTarget.textContent = `”${word}”`
     const el = this.retireOverlayTarget
-    el.classList.remove(“hidden”); el.classList.add(“flex”)
+    el.classList.remove("hidden"); el.classList.add("flex")
     clearTimeout(this._retireTimer)
     this._retireTimer = setTimeout(() => {
-      el.classList.add(“hidden”); el.classList.remove(“flex”)
+      el.classList.add("hidden"); el.classList.remove("flex")
     }, 2800)
   }
 
