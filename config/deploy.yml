@@ -45,6 +45,7 @@ env:
     - ANTHROPIC_API_KEY   # AI deck generation (Mihai's key; per-user cap guards cost)
   clear:
     SOLID_QUEUE_IN_PUMA: true
+    FSRS_ENABLED: 1   # FSRS scheduling + retire-and-celebrate + ease (#5). Flipped on 2026-06-20.
 
 # Persist SQLite (production.sqlite3 + solid_* DBs) across deploys.
 # Container path matches Rails' storage/ dir.
