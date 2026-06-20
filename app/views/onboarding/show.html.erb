@@ -2,7 +2,7 @@
 
 <div class="mx-auto max-w-sm">
   <h1 class="text-2xl font-semibold tracking-tight">What do you want to learn?</h1>
-  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">You can change this anytime.</p>
+  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">You can change this anytime in settings.</p>
 
   <% if @user.errors.any? %>
     <ul class="mt-4 space-y-1 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300">
@@ -12,21 +12,69 @@
     </ul>
   <% end %>
 
-  <%= form_with model: @user, url: onboarding_path, method: :patch, class: "mt-6 space-y-4" do |f| %>
+  <%= form_with model: @user, url: onboarding_path, method: :patch, class: "mt-6 space-y-5" do |f| %>
     <% if @user.name.blank? %>
       <div>
         <%= f.label :name, "Your name", class: "block text-xs font-medium text-gray-600 dark:text-gray-300" %>
         <%= f.text_field :name, autocomplete: "name", class: "mt-1 #{field_classes}" %>
       </div>
     <% end %>
-    <div>
-      <%= f.label :target_language, "I want to learn", class: "block text-xs font-medium text-gray-600 dark:text-gray-300" %>
-      <%= f.select :target_language, options_for_select(language_options, @user.target_language), { prompt: "Choose a language" }, required: true, class: "mt-1 #{field_classes}" %>
-    </div>
+
     <div>
       <%= f.label :source_language, "I already speak", class: "block text-xs font-medium text-gray-600 dark:text-gray-300" %>
       <%= f.select :source_language, options_for_select(language_options, @user.source_language || "en"), {}, class: "mt-1 #{field_classes}" %>
     </div>
-    <%= f.submit "Start learning", class: primary_button_classes %>
+
+    <%# Multi-select chip picker for learning languages.
+        Hidden sentinel ensures the param key always arrives even when nothing is checked.
+        JS controller (language-chips) toggles the visual selected/unselected state. %>
+    <div data-controller="language-chips">
+      <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">I'm learning</label>
+      <p class="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">Tap to add. Drill any of these together or one at a time.</p>
+
+      <%# sentinel so the key always arrives %>
+      <input type="hidden" name="user[learning_languages][]" value="">
+
+      <div class="mt-2 flex flex-wrap gap-2">
+        <% source = @user.source_language || "en" %>
+        <% selected_langs = @user.active_learning_languages %>
+        <% Translation::LANGUAGES.each do |code, name| %>
+          <% next if code == source %>
+          <% is_selected = selected_langs.include?(code) %>
+          <label class="cursor-pointer">
+            <input type="checkbox" name="user[learning_languages][]" value="<%= code %>"
+                   <%= "checked" if is_selected %>
+                   class="sr-only"
+                   data-language-chips-target="checkbox"
+                   data-action="change->language-chips#toggle">
+            <span data-language-chips-target="chip"
+                  class="inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium transition-colors
+                         <%= is_selected ? 'border-gray-900 bg-gray-900 text-white dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900' : 'border-gray-300 text-gray-500 dark:border-gray-700 dark:text-gray-400' %>">
+              <%= name %>
+            </span>
+          </label>
+        <% end %>
+      </div>
+    </div>
+
+    <%# Drill direction (forward=source→targets, random=any order per card) %>
+    <div>
+      <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">Drill direction</label>
+      <div class="mt-1.5 inline-flex rounded-lg border border-gray-300 bg-gray-50 p-0.5 dark:border-gray-700 dark:bg-gray-950">
+        <% [["forward", "Source → target"], ["random", "Randomize order"]].each do |value, label| %>
+          <label class="cursor-pointer">
+            <%= f.radio_button :drill_direction, value,
+                  class: "sr-only",
+                  data: { action: "change->language-chips#noop" } %>
+            <span class="block rounded-md px-3 py-1.5 text-sm transition-colors
+                         <%= @user.drill_direction == value ? 'bg-white shadow-sm dark:bg-gray-700 text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400' %>">
+              <%= label %>
+            </span>
+          </label>
+        <% end %>
+      </div>
+    </div>
+
+    <%= f.submit "Save & start drilling", class: primary_button_classes %>
   <% end %>
 </div>

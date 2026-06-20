@@ -6,17 +6,31 @@ const DIFFICULTY_METER = { easy: "● ○ ○", medium: "● ● ○", hard: "�
 // Keyboard-driven drill. Prompt -> type -> Enter checks (and reveals the full
 // multi-language card) -> arrows/Space/Enter move. Keys handled on window so
 // navigation works after the input locks. Cards are graded in-browser.
+//
+// MULTI-LANGUAGE MODE (kind === "multi"):
+//   Each card has a `targets` array (one entry per learning language).
+//   The card loops through targets one at a time:
+//     - source word pins at top
+//     - ONE target input is live at a time
+//     - on Check: answer settles into a completed band above, next target becomes live
+//     - when all targets done: "Next concept →" button appears
+//   One Attempt is recorded per target (from_language → to_language = target.lang).
+//   The regular single-target flow is entirely unchanged.
 export default class extends Controller {
   static targets = [
     "prompt", "kindTag", "input", "feedback", "answer", "given", "answerSpeak",
     "difficulty", "alts", "detail", "nextBtn", "checkBtn", "backBtn",
-    "progress", "score", "bar", "card", "summary", "summaryText", "missed", "auto", "autoWrong", "voiceHint"
+    "progress", "score", "bar", "card", "summary", "summaryText", "missed", "auto", "autoWrong", "voiceHint",
+    // Multi-language targets (only present when @multi == true in the view):
+    "multiCard", "multiFrom", "multiPrompt", "multiStep",
+    "multiDone", "multiLangLabel", "multiInput", "multiUpcoming",
+    "multiCheck", "multiNext", "celebrateText", "celebrate",
   ]
-  static values = { cards: Array, sentences: Array, from: String, to: String, recordUrl: String }
+  static values = { cards: Array, sentences: Array, from: String, to: String, recordUrl: String, multi: Boolean }
 
   connect() {
     this.cards = this.buildSequence(this.cardsValue, this.hasSentencesValue ? this.sentencesValue : [])
-    this.results = this.cards.map(() => ({ graded: false, correct: false, given: "" }))
+    this.results = this.cards.map((card) => this.initResult(card))
     this.index = 0
     this.autoOn = localStorage.getItem("drill-autoplay") === "1"
     if (this.hasAutoTarget) this.autoTarget.checked = this.autoOn
@@ -34,10 +48,25 @@ export default class extends Controller {
     this.unbindSwipe()
   }
 
+  // Initialise a per-card result object.
+  // Multi cards carry per-target state in result.targets[].
+  initResult(card) {
+    if (card.kind === "multi") {
+      return {
+        graded: false,      // true once ALL targets done
+        targetIndex: 0,     // which target is currently live
+        targets: card.targets.map(() => ({ graded: false, correct: false, given: "" })),
+      }
+    }
+    return { graded: false, correct: false, given: "" }
+  }
+
   // Touch: swipe right = forward (reveal, then next), swipe left = back.
   // Mirrors Enter/ArrowRight so phone-in-bed practice needs no keyboard.
   bindSwipe() {
-    if (!this.hasCardTarget) return
+    const el = this.hasMultiCardTarget ? this.multiCardTarget : (this.hasCardTarget ? this.cardTarget : null)
+    if (!el) return
+    this._swipeEl = el
     this.touchStartX = null
     this.onTouchStart = (event) => {
       const t = event.changedTouches[0]
@@ -55,14 +84,14 @@ export default class extends Controller {
       if (dx > 0) this.forward()
       else this.prev()
     }
-    this.cardTarget.addEventListener("touchstart", this.onTouchStart, { passive: true })
-    this.cardTarget.addEventListener("touchend", this.onTouchEnd, { passive: true })
+    el.addEventListener("touchstart", this.onTouchStart, { passive: true })
+    el.addEventListener("touchend", this.onTouchEnd, { passive: true })
   }
 
   unbindSwipe() {
-    if (!this.hasCardTarget) return
-    this.cardTarget.removeEventListener("touchstart", this.onTouchStart)
-    this.cardTarget.removeEventListener("touchend", this.onTouchEnd)
+    if (!this._swipeEl) return
+    this._swipeEl.removeEventListener("touchstart", this.onTouchStart)
+    this._swipeEl.removeEventListener("touchend", this.onTouchEnd)
   }
 
   // One forward step: reveal the answer if still answering, else advance.
@@ -111,20 +140,52 @@ export default class extends Controller {
 
   grade() {
     const card = this.cards[this.index]
+
+    // --- MULTI-LANGUAGE grade: one target at a time ---
+    if (card.kind === "multi") {
+      this.gradeMultiTarget()
+      return
+    }
+
+    // --- SINGLE-LANGUAGE grade (unchanged) ---
     const result = this.results[this.index]
     result.given = this.inputTarget.value
     const accepted = (card.accept && card.accept.length ? card.accept : [card.answer]).map((a) => this.normalize(a))
     result.correct = accepted.includes(this.normalize(result.given))
     result.graded = true
-    const saved = this.record(card.id, result.correct, result.given)
+    const saved = this.record(card.id, result.correct, result.given, this.fromValue, this.toValue)
     this.render()
 
     if (result.correct) {
-      // Server tells us when this answer first reaches 2 corrects (enters the collection).
       saved.then((data) => { if (data && data.newly_owned) this.celebrate(card) })
     } else if (this.autoWrongOn) {
       this.speakAnswer()
     }
+  }
+
+  // Grade the currently live target in a multi-language card.
+  gradeMultiTarget() {
+    const card = this.cards[this.index]
+    const result = this.results[this.index]
+    const ti = result.targetIndex
+    const target = card.targets[ti]
+    const tResult = result.targets[ti]
+
+    tResult.given = this.multiInputTarget.value
+    const accepted = (target.accept && target.accept.length ? target.accept : [target.answer]).map((a) => this.normalize(a))
+    tResult.correct = accepted.includes(this.normalize(tResult.given))
+    tResult.graded = true
+
+    // Record one Attempt per target language direction.
+    this.record(card.id, tResult.correct, tResult.given, this.fromValue, target.lang)
+
+    const allDone = result.targets.every((t) => t.graded)
+    if (allDone) {
+      result.graded = true
+    } else {
+      result.targetIndex = ti + 1
+    }
+    this.renderMulti()
   }
 
   next() {
@@ -142,8 +203,123 @@ export default class extends Controller {
 
   render() {
     const card = this.cards[this.index]
+    if (card.kind === "multi") {
+      this.renderMulti()
+    } else {
+      this.renderSingle()
+    }
+  }
+
+  // ─── MULTI-LANGUAGE RENDER ────────────────────────────────────────────────
+  // The multi card is a separate DOM section (`data-drill-target="multiCard"`)
+  // so it can coexist with the single-card DOM without clashing targets.
+
+  renderMulti() {
+    if (!this.hasMultiCardTarget) return
+    const card = this.cards[this.index]
+    const result = this.results[this.index]
+    const ti = result.targetIndex
+    const allDone = result.graded
+
+    // Unhide multi card, hide single card if present.
+    this.multiCardTarget.classList.remove("hidden")
+    if (this.hasCardTarget) this.cardTarget.classList.add("hidden")
+
+    // Progress bar + counter (counts concepts, not individual target answers).
+    if (this.hasProgressTarget) this.progressTarget.textContent = `${this.index + 1} / ${this.cards.length}`
+    if (this.hasBarTarget) this.barTarget.style.width = `${((this.index + 1) / this.cards.length) * 100}%`
+    this.updateScore()
+
+    // From-language label and source word (pin at top throughout the card).
+    if (this.hasMultiFromTarget) this.multiFromTarget.textContent = card.from_lang_name || ""
+    if (this.hasMultiPromptTarget) this.multiPromptTarget.textContent = card.prompt
+
+    // Step counter: "2 of 3" etc. (counts only THIS card's targets, not all concepts).
+    const total = card.targets.length
+    const stepNum = allDone ? total : Math.min(ti + 1, total)
+    if (this.hasMultiStepTarget) this.multiStepTarget.textContent = `${stepNum} of ${total}`
+
+    // Completed band: answered targets, settled and quiet above the live input.
+    if (this.hasMultiDoneTarget) {
+      const doneBands = result.targets
+        .slice(0, allDone ? result.targets.length : ti)
+        .map((tRes, i) => {
+          const t = card.targets[i]
+          if (!tRes.graded) return ""
+          const esc = (s) => (s || "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]))
+          if (tRes.correct) {
+            return `<div class="flex items-baseline justify-between py-1">
+              <span class="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">${esc(t.lang_name)}</span>
+              <span class="flex items-baseline gap-1.5 text-sm">
+                <span class="text-emerald-600 dark:text-emerald-400">✓</span>
+                <span>${esc(tRes.given)}</span>
+              </span>
+            </div>`
+          } else {
+            const full = t.answer_article ? `${t.answer_article} ${t.answer}` : t.answer
+            return `<div class="flex items-baseline justify-between py-1">
+              <span class="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500">${esc(t.lang_name)}</span>
+              <span class="flex items-baseline gap-1.5 text-sm">
+                <span class="text-rose-500 dark:text-rose-400">✗</span>
+                <span class="text-gray-400 line-through dark:text-gray-500">${esc(tRes.given)}</span>
+                <span class="font-medium">${esc(full)}</span>
+              </span>
+            </div>`
+          }
+        })
+        .join("")
+      this.multiDoneTarget.innerHTML = doneBands
+      this.multiDoneTarget.classList.toggle("hidden", doneBands.trim() === "")
+    }
+
+    // Live input section (hidden when all targets are done).
+    const currentTarget = !allDone && card.targets[ti]
+    if (this.hasMultiLangLabelTarget) {
+      this.multiLangLabelTarget.textContent = currentTarget ? currentTarget.lang_name : ""
+    }
+    if (this.hasMultiInputTarget) {
+      const inputSection = this.multiInputTarget.closest("[data-multi-input-section]")
+      if (inputSection) inputSection.classList.toggle("hidden", !currentTarget)
+      if (currentTarget) {
+        this.multiInputTarget.value = ""
+        this.multiInputTarget.disabled = false
+        this.multiInputTarget.placeholder = `${(currentTarget.lang_name || "").toLowerCase()}…`
+        this.multiInputTarget.focus()
+      }
+    }
+
+    // Upcoming: faint marker showing remaining languages after the live one.
+    if (this.hasMultiUpcomingTarget) {
+      const upcomingNames = allDone ? [] : card.targets.slice(ti + 1).map((t) => t.lang_name)
+      this.multiUpcomingTarget.textContent = upcomingNames.length ? `then ${upcomingNames.join(" · ")}` : ""
+    }
+
+    // Detail panel (all translations) — shown after all targets done.
+    if (this.hasDetailTarget) {
+      if (allDone) {
+        this.renderDetail(card)
+      } else {
+        this.detailTarget.innerHTML = ""
+        this.detailTarget.classList.add("hidden")
+      }
+    }
+
+    // Buttons: Check while answering, Next concept when done.
+    if (this.hasMultiCheckTarget) this.multiCheckTarget.classList.toggle("hidden", allDone || !currentTarget)
+    if (this.hasMultiNextTarget)  this.multiNextTarget.classList.toggle("hidden", !allDone)
+    if (this.hasBackBtnTarget) this.backBtnTarget.classList.toggle("hidden", this.index === 0)
+  }
+
+  // ─── SINGLE-LANGUAGE RENDER (unchanged from original) ─────────────────────
+
+  renderSingle() {
+    const card = this.cards[this.index]
     const result = this.results[this.index]
     const isSentence = card.kind === "sentence"
+
+    // Show single card, hide multi card if present.
+    if (this.hasMultiCardTarget) this.multiCardTarget.classList.add("hidden")
+    if (this.hasCardTarget) this.cardTarget.classList.remove("hidden")
 
     this.promptTarget.textContent = card.prompt
     this.promptTarget.className = isSentence
@@ -219,28 +395,41 @@ export default class extends Controller {
   }
 
   finish() {
-    const correct = this.results.filter((r) => r.correct).length
+    // Count a multi-card as correct only if ALL its targets were correct.
+    const correct = this.results.filter((r, i) => {
+      if (this.cards[i].kind === "multi") return r.targets && r.targets.every((t) => t.correct)
+      return r.correct
+    }).length
     const pct = Math.round((correct / this.cards.length) * 100)
     const missed = this.cards
-      .filter((_, i) => this.results[i].graded && !this.results[i].correct)
+      .filter((_, i) => this.results[i].graded && (
+        this.cards[i].kind === "multi"
+          ? !this.results[i].targets.every((t) => t.correct)
+          : !this.results[i].correct
+      ))
       .map((c) => c.prompt)
 
     const owned = this.ownedThisRun ? `🎉 ${this.ownedThisRun} newly owned. ` : ""
     this.summaryTextTarget.textContent = `${correct} / ${this.cards.length} correct (${pct}%)`
     this.missedTarget.textContent = owned + (missed.length ? `Missed: ${missed.join(", ")}` : "Clean run — nothing missed.")
-    this.cardTarget.classList.add("hidden")
+    if (this.hasCardTarget) this.cardTarget.classList.add("hidden")
+    if (this.hasMultiCardTarget) this.multiCardTarget.classList.add("hidden")
     this.summaryTarget.classList.remove("hidden")
   }
 
   restart() {
     window.removeEventListener("keydown", this.onKey)
     this.connect()
-    this.cardTarget.classList.remove("hidden")
+    if (this.hasCardTarget) this.cardTarget.classList.remove("hidden")
+    if (this.hasMultiCardTarget) this.multiCardTarget.classList.add("hidden")
     this.summaryTarget.classList.add("hidden")
   }
 
   updateScore() {
-    const correct = this.results.filter((r) => r.correct).length
+    const correct = this.results.filter((r, i) => {
+      if (this.cards[i].kind === "multi") return r.targets && r.targets.every((t) => t.graded && t.correct)
+      return r.correct
+    }).length
     const graded = this.results.filter((r) => r.graded).length
     this.scoreTarget.textContent = graded ? `${correct}/${graded}` : ""
   }
@@ -257,10 +446,10 @@ export default class extends Controller {
   }
 
   // A short celebration when a word crosses into the owned collection.
-  celebrate(card) {
+  celebrateCard(card) {
     this.ownedThisRun++
     if (!this.hasCelebrateTarget) return
-    this.celebrateTextTarget.textContent = `🎉 Owned! “${card.answer}” is in your collection`
+    this.celebrateTextTarget.textContent = `🎉 Owned! "${card.prompt}" is in your collection`
     const el = this.celebrateTarget
     const bubble = el.firstElementChild
     el.classList.remove("hidden"); el.classList.add("flex")
@@ -285,7 +474,11 @@ export default class extends Controller {
   }
 
   speakPrompt() { this.speak(this.cards[this.index].prompt, this.fromValue) }
-  speakAnswer() { this.speak(this.cards[this.index].answer, this.toValue) }
+  speakAnswer() {
+    const card = this.cards[this.index]
+    if (card.kind === "multi") return  // multi: each target has its own lang; skip auto-speak
+    this.speak(card.answer, this.toValue)
+  }
 
   speak(text, code) {
     pronounce(text, code, { onResult: ({ hasVoice, lang }) => this.flagMissingVoice(hasVoice, lang) })
@@ -305,13 +498,15 @@ export default class extends Controller {
 
   // --- persistence ---
 
-  record(termId, correct, given) {
+  // Records one attempt. fromLang/toLang are passed explicitly so multi-target
+  // cards can record each target language independently.
+  record(termId, correct, given, fromLang, toLang) {
     if (!this.hasRecordUrlValue || !this.recordUrlValue) return Promise.resolve(null)
     const token = document.querySelector('meta[name="csrf-token"]')?.content
     return fetch(this.recordUrlValue, {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-CSRF-Token": token || "" },
-      body: JSON.stringify({ term_id: termId, from: this.fromValue, to: this.toValue, correct, given }),
+      body: JSON.stringify({ term_id: termId, from: fromLang || this.fromValue, to: toLang || this.toValue, correct, given }),
       keepalive: true,
     }).then((r) => (r.ok ? r.json() : null)).catch(() => null)
   }

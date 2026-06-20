@@ -1,6 +1,7 @@
 <% content_for :title, "#{current_user.target_language_name} drill" %>
 <% target = current_user.target_language %>
 <% source = current_user.source_language %>
+<% learning = current_user.active_learning_languages %>
 <% pending = @decks.select { |d| d.status == "pending" } %>
 
 <% if pending.any? %>
@@ -12,7 +13,10 @@
     <h1 class="text-2xl font-semibold tracking-tight"><%= current_user.target_language_name %> drill</h1>
     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Your vocabulary, your pace.</p>
   </div>
-  <%= link_to "Your words →", stats_path, class: "shrink-0 text-xs text-gray-500 hover:underline dark:text-gray-400" %>
+  <div class="flex items-center gap-3">
+    <%= link_to "Your words →", stats_path, class: "shrink-0 text-xs text-gray-500 hover:underline dark:text-gray-400" %>
+    <%= link_to "Settings", onboarding_path, class: "shrink-0 text-xs text-gray-500 hover:underline dark:text-gray-400" %>
+  </div>
 </header>
 
 <% if pending.any? %>
@@ -60,16 +64,22 @@
     </div>
   <% end %>
 
+  <%# ── All words row: single-language + optional multi-language ── %>
   <div class="mb-8 flex items-center justify-between gap-4 rounded-lg border border-gray-300 bg-white px-4 py-4 dark:border-gray-700 dark:bg-gray-900">
     <div>
-      <%= link_to "All words", play_path(deck: "all", from: target, to: source), class: "text-base font-semibold hover:underline" %>
+      <%= link_to "All words", play_path(deck: "all", from: source, to: target), class: "text-base font-semibold hover:underline" %>
       <p class="text-xs text-gray-500 dark:text-gray-400">every word, shuffled · <%= pluralize(@word_count, "word") %></p>
     </div>
-    <div class="flex items-center gap-2 text-xs">
-      <%= link_to "#{target.upcase} → #{source.upcase}", play_path(deck: "all", from: target, to: source),
-            class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
+    <div class="flex flex-wrap items-center justify-end gap-2 text-xs">
       <%= link_to "#{source.upcase} → #{target.upcase}", play_path(deck: "all", from: source, to: target),
             class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
+      <%= link_to "#{target.upcase} → #{source.upcase}", play_path(deck: "all", from: target, to: source),
+            class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
+      <%# Multi-language entry point: only shown when the user has 2+ learning languages %>
+      <% if current_user.multi_language_drill? %>
+        <%= link_to "#{source.upcase} → all #{learning.size}", play_path(deck: "all", from: source, multi: "1"),
+              class: "rounded-md border border-gray-900 bg-gray-900 px-2.5 py-1 text-white hover:bg-gray-700 dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white" %>
+      <% end %>
     </div>
   </div>
 
@@ -83,15 +93,19 @@
       <% next unless deck.status != "pending" && deck.terms.any? %>
       <li class="flex items-center justify-between gap-4 py-4">
         <div>
-          <%= link_to deck.name, play_path(deck: deck.slug, from: target, to: source), class: "text-base font-medium hover:underline" %>
+          <%= link_to deck.name, play_path(deck: deck.slug, from: source, to: target), class: "text-base font-medium hover:underline" %>
           <% unit = deck.terms.exists?(kind: "sentence") ? "sentence" : "word" %>
           <p class="text-xs text-gray-500 dark:text-gray-400"><%= pluralize(deck.terms.size, unit) %><%= " · #{deck.topic}" if deck.topic.present? %></p>
         </div>
-        <div class="flex items-center gap-2 text-xs">
-          <%= link_to "#{target.upcase} → #{source.upcase}", play_path(deck: deck.slug, from: target, to: source),
-                class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
+        <div class="flex flex-wrap items-center justify-end gap-2 text-xs">
           <%= link_to "#{source.upcase} → #{target.upcase}", play_path(deck: deck.slug, from: source, to: target),
                 class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
+          <%= link_to "#{target.upcase} → #{source.upcase}", play_path(deck: deck.slug, from: target, to: source),
+                class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
+          <% if current_user.multi_language_drill? %>
+            <%= link_to "#{source.upcase} → all #{learning.size}", play_path(deck: deck.slug, from: source, multi: "1"),
+                  class: "rounded-md border border-gray-900 bg-gray-900 px-2.5 py-1 text-white hover:bg-gray-700 dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white" %>
+          <% end %>
         </div>
       </li>
     <% end %>

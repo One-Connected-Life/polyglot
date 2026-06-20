@@ -5,6 +5,8 @@ FactoryBot.define do
     name { "Test" }
     target_language { "nl" }
     source_language { "en" }
+    learning_languages { nil }  # pass a Ruby Array (not .to_json) when overriding
+    drill_direction { "forward" }
   end
 
   factory :deck do
