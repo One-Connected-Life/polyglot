@@ -6,6 +6,10 @@ class Term < ApplicationRecord
 
   accepts_nested_attributes_for :translations
 
+  # Only terms from saved, drillable decks — excludes decks still transcribing or
+  # awaiting review (issue #3), so un-reviewed audio words never enter practice/stats.
+  scope :drillable, -> { joins(:deck).where(decks: { status: "ready" }) }
+
   # Translation in a given language (string or symbol code), or nil.
   def translation(language)
     translations.detect { |t| t.language == language.to_s }

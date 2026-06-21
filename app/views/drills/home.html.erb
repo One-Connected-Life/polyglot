@@ -2,11 +2,14 @@
 <% target = current_user.target_language %>
 <% source = current_user.source_language %>
 <% learning = current_user.active_learning_languages %>
-<% pending = @decks.select { |d| d.status == "pending" } %>
+<% generating   = @decks.select { |d| d.status == "pending" } %>
+<% transcribing = @decks.select { |d| d.status == "transcribing" } %>
+<% reviewable   = @decks.select { |d| d.status == "review" } %>
+<% working      = generating.any? || transcribing.any? %>
 
-<%# Gentle poll while a deck generates — Turbo replace-visit, not a hard meta
-    refresh (keeps scroll position, no white flash on the phone). %>
-<% if pending.any? %>
+<%# Gentle poll while a deck generates or transcribes — Turbo replace-visit, not a hard
+    meta refresh (keeps scroll position, no white flash on the phone). %>
+<% if working %>
   <div data-controller="poll" data-poll-interval-value="5000" class="hidden"></div>
 <% end %>
 
@@ -21,17 +24,32 @@
   </div>
 </header>
 
-<% if pending.any? %>
+<% if generating.any? %>
   <div class="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200">
-    ⏳ Generating <%= pending.map(&:name).to_sentence %>… this page refreshes itself.
+    ⏳ Generating <%= generating.map(&:name).to_sentence %>… this page refreshes itself.
+  </div>
+<% end %>
+
+<% if transcribing.any? %>
+  <div class="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200">
+    🎧 Transcribing <%= transcribing.map(&:name).to_sentence %>… this page refreshes itself.
+  </div>
+<% end %>
+
+<% reviewable.each do |deck| %>
+  <div class="mb-4 flex items-center justify-between gap-4 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200">
+    <span>✨ “<%= deck.name %>” is ready — <%= pluralize(deck.terms.size, "word") %> pulled from your audio.</span>
+    <%= link_to "Review →", review_deck_path(deck),
+          class: "shrink-0 rounded-md border border-emerald-400 px-2.5 py-1 font-medium hover:bg-emerald-100 dark:border-emerald-700 dark:hover:bg-emerald-900/40" %>
   </div>
 <% end %>
 
 <% failed = @decks.select { |d| d.status == "failed" } %>
 <% if failed.any? %>
   <div class="mb-6 rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300">
-    <p>Couldn't build <%= failed.map(&:name).to_sentence %> — the word generator errored. Try
-      <%= link_to "a different topic", new_deck_path, class: "underline" %>.</p>
+    <p>Couldn't build <%= failed.map(&:name).to_sentence %><% if (detail = failed.filter_map(&:status_detail).first).present? %> — <%= detail %><% else %> — the generator errored<% end %>. Try
+      <%= link_to "a different topic", new_deck_path, class: "underline" %> or
+      <%= link_to "another recording", new_audio_deck_path, class: "underline" %>.</p>
     <div class="mt-2 flex flex-wrap gap-2">
       <% failed.each do |d| %>
         <%= button_to "Remove #{d.name}", deck_path(d), method: :delete,
@@ -41,14 +59,19 @@
   </div>
 <% end %>
 
-<% if @word_count.zero? && pending.none? %>
+<% if @word_count.zero? && !working && reviewable.none? %>
   <div class="rounded-lg border border-gray-300 bg-white px-5 py-6 text-center dark:border-gray-700 dark:bg-gray-900">
     <p class="text-sm text-gray-600 dark:text-gray-300">No words yet.</p>
     <p class="mx-auto mt-1 max-w-sm text-xs text-gray-500 dark:text-gray-400">
-      Pick a topic and we'll build a <%= current_user.target_language_name %> deck for you.
+      Pick a topic, or upload audio you want to understand — we'll build a
+      <%= current_user.target_language_name %> deck from it.
     </p>
-    <%= link_to "Create your first deck", new_deck_path,
-          class: "mt-5 inline-block rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white" %>
+    <div class="mt-5 flex flex-wrap items-center justify-center gap-2">
+      <%= link_to "Create your first deck", new_deck_path,
+            class: "inline-block rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white" %>
+      <%= link_to "Upload audio", new_audio_deck_path,
+            class: "inline-block rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
+    </div>
   </div>
 <% elsif @word_count.positive? %>
   <% if @miss_counts.any? %>
@@ -87,12 +110,15 @@
 
   <div class="mb-3 flex items-center justify-between">
     <p class="text-xs uppercase tracking-wide text-gray-400">your decks</p>
-    <%= link_to "+ add a topic", new_deck_path, class: "text-xs text-gray-500 hover:underline dark:text-gray-400" %>
+    <div class="flex items-center gap-3">
+      <%= link_to "+ add a topic", new_deck_path, class: "text-xs text-gray-500 hover:underline dark:text-gray-400" %>
+      <%= link_to "↑ from audio", new_audio_deck_path, class: "text-xs text-gray-500 hover:underline dark:text-gray-400" %>
+    </div>
   </div>
 
   <ul class="divide-y divide-gray-200 border-y border-gray-200 dark:divide-gray-800 dark:border-gray-800">
     <% @decks.each do |deck| %>
-      <% next unless deck.status != "pending" && deck.terms.any? %>
+      <% next unless deck.status == "ready" && deck.terms.any? %>
       <li class="flex items-center justify-between gap-4 py-4">
         <div>
           <%= link_to deck.name, play_path(deck: deck.slug, from: source, to: target), class: "text-base font-medium hover:underline" %>

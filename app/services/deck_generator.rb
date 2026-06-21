@@ -13,17 +13,20 @@ class DeckGenerator
 
   # transcript: when present, extract the vocabulary that actually appears in this text
   # (audio→vocab, issue #3) instead of generating fresh words from deck.topic.
-  def initialize(deck, transcript: nil)
+  # final_status: the status the deck lands in once words are persisted — "ready" for
+  # topic decks (drillable immediately), "review" for audio decks (user prunes first).
+  def initialize(deck, transcript: nil, final_status: "ready")
     @deck = deck
     @user = deck.user
     @transcript = transcript.to_s.strip.presence
+    @final_status = final_status
   end
 
   def call
     words = fetch_words
     raise Error, "model returned no usable words" if words.blank?
     persist(words)
-    @deck.update!(status: "ready")
+    @deck.update!(status: @final_status)
   rescue StandardError => e
     @deck.update!(status: "failed")
     Rails.logger.error("[DeckGenerator] deck=#{@deck.id} #{e.class}: #{e.message}")

@@ -1,0 +1,29 @@
+<% content_for :title, "Deck from audio" %>
+
+<div class="mx-auto max-w-sm">
+  <%= link_to "← decks", root_path, class: "text-xs text-gray-500 hover:underline dark:text-gray-400" %>
+  <h1 class="mt-1 text-2xl font-semibold tracking-tight">Deck from audio</h1>
+  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+    Upload a recording — a voicemail, a clip, a conversation you want to understand — and
+    we'll pull the <%= current_user.target_language_name %> vocabulary out of it for you to review.
+  </p>
+
+  <%= form_with url: audio_decks_path, method: :post, multipart: true, class: "mt-6 space-y-4" do %>
+    <div>
+      <label for="audio" class="block text-xs font-medium text-gray-600 dark:text-gray-300">Audio file</label>
+      <input type="file" name="audio" id="audio" required
+             accept="audio/*,.m4a,.mp3,.wav,.ogg,.flac,.aac"
+             class="mt-1 block w-full text-sm text-gray-600 dark:text-gray-300
+                    file:mr-3 file:rounded-lg file:border-0 file:bg-gray-900 file:px-4 file:py-2
+                    file:text-sm file:font-medium file:text-white hover:file:bg-gray-800
+                    dark:file:bg-gray-100 dark:file:text-gray-900 dark:hover:file:bg-white" />
+    </div>
+    <button type="submit" class="<%= primary_button_classes %>">Transcribe &amp; extract</button>
+  <% end %>
+
+  <p class="mt-4 text-xs text-gray-400">
+    Private by design: the audio is transcribed on our own server and deleted the moment
+    we're done — we never keep your recording.
+  </p>
+  <p class="mt-6 text-xs text-gray-400"><%= pluralize(current_user.generations_left, "deck") %> left.</p>
+</div>

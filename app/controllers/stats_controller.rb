@@ -2,7 +2,7 @@ class StatsController < ApplicationController
   def index
     @target = current_user.target_language
     @source = current_user.source_language
-    @words  = current_user.terms.where(kind: "word").includes(:translations).to_a
+    @words  = current_user.terms.drillable.where(kind: "word").includes(:translations).to_a
 
     # [term_id, from, to] => { correct:, wrong:, latest_correct: }
     @summary = Hash.new { |h, k| h[k] = { correct: 0, wrong: 0, latest_correct: nil } }

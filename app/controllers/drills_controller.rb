@@ -2,7 +2,7 @@ class DrillsController < ApplicationController
   def home
     @decks       = current_user.decks.includes(:terms).order(:position)
     @miss_counts = current_user.attempts.miss_counts(langs: current_user.drillable_languages)
-    @word_count  = current_user.terms.where(kind: "word").count
+    @word_count  = current_user.terms.drillable.where(kind: "word").count
   end
 
   def play
@@ -42,7 +42,7 @@ class DrillsController < ApplicationController
         if @is_sentence_deck
           []
         else
-          pool = current_user.terms.where(kind: "sentence").includes(:translations).to_a
+          pool = current_user.terms.drillable.where(kind: "sentence").includes(:translations).to_a
           pool.reject! { |t| excluded_ids.include?(t.id) }
           pool.filter_map { |t| build_card(t) }
         end
@@ -216,7 +216,7 @@ class DrillsController < ApplicationController
     when "all", nil, ""
       @title     = "All words"
       @deck_slug = "all"
-      current_user.terms.where(kind: "word").order(:deck_id, :position)
+      current_user.terms.drillable.where(kind: "word").order(:deck_id, :position)
     else
       @deck            = current_user.decks.find_by!(slug: deck_param)
       @title           = @deck.name

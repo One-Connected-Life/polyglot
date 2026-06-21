@@ -30,8 +30,17 @@ Rails.application.routes.draw do
   # Every word + your attempt history (right/wrong) and status.
   get "stats", to: "stats#index"
 
-  # AI-generate a deck from a topic, or remove one.
-  resources :decks, only: [:new, :create, :destroy]
+  # AI-generate a deck from a topic, or remove one. Audio decks (issue #3) get a
+  # review step before they go drillable.
+  resources :decks, only: [:new, :create, :destroy] do
+    member do
+      get   :review
+      patch :review, action: :update_review
+    end
+  end
+
+  # Upload your own audio → extract a vocabulary deck (issue #3).
+  resources :audio_decks, only: [:new, :create]
 
   # IPA cheat sheet — compact legend reachable from any drill card phonetic line.
   get "ipa-guide", to: "phonetics#guide", as: :ipa_guide
