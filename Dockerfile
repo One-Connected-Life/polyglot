@@ -14,9 +14,12 @@ FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 # Rails app lives here
 WORKDIR /rails
 
-# Install base packages
+# Install base packages.
+# ffmpeg + libgomp1 are runtime deps for self-hosted audio transcription
+# (audio→vocab, issue 3): ffmpeg normalizes uploads to 16kHz WAV, libgomp1 is
+# whisper.cpp's OpenMP runtime.
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libjemalloc2 libvips sqlite3 && \
+    apt-get install --no-install-recommends -y curl libjemalloc2 libvips sqlite3 ffmpeg libgomp1 && \
     ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
@@ -55,6 +58,25 @@ RUN bundle exec bootsnap precompile -j 1 app/ lib/
 RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 
 
+# ── Whisper build stage: self-hosted transcription for audio→vocab (issue 3) ──
+# Compiles whisper.cpp's CLI statically (BUILD_SHARED_LIBS=OFF → one self-contained
+# binary, no .so juggling) and bakes a model into the image. "small" is a good
+# Dutch/CPU balance; bump WHISPER_MODEL_NAME to ggml-medium.bin for more accuracy.
+FROM base AS whisper
+ARG WHISPER_REF=v1.7.4
+ARG WHISPER_MODEL_NAME=ggml-small.bin
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y build-essential cmake git curl && \
+    git clone --depth 1 --branch ${WHISPER_REF} https://github.com/ggerganov/whisper.cpp /tmp/whisper && \
+    cmake -S /tmp/whisper -B /tmp/whisper/build \
+        -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DGGML_NATIVE=OFF \
+        -DWHISPER_BUILD_TESTS=OFF -DWHISPER_BUILD_EXAMPLES=ON && \
+    cmake --build /tmp/whisper/build --target whisper-cli -j "$(nproc)" && \
+    mkdir -p /opt/whisper/bin /opt/whisper/models && \
+    cp /tmp/whisper/build/bin/whisper-cli /opt/whisper/bin/whisper-cli && \
+    curl -fL -o /opt/whisper/models/${WHISPER_MODEL_NAME} \
+        https://huggingface.co/ggerganov/whisper.cpp/resolve/main/${WHISPER_MODEL_NAME} && \
+    rm -rf /tmp/whisper /var/lib/apt/lists /var/cache/apt/archives
 
 
 # Final stage for app image
@@ -68,6 +90,12 @@ USER 1000:1000
 # Copy built artifacts: gems, application
 COPY --chown=rails:rails --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --chown=rails:rails --from=build /rails /rails
+
+# Self-hosted transcription binary + model (audio→vocab, issue 3). Transcriber
+# reads these paths via WHISPER_CLI / WHISPER_MODEL; ffmpeg is on PATH from base.
+COPY --chown=rails:rails --from=whisper /opt/whisper /opt/whisper
+ENV WHISPER_CLI=/opt/whisper/bin/whisper-cli \
+    WHISPER_MODEL=/opt/whisper/models/ggml-small.bin
 
 # Entrypoint prepares the database.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
