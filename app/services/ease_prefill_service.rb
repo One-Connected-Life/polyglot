@@ -35,11 +35,13 @@ class EasePrefillService
     terms.map { |term| score_term(term) }
   end
 
-  # Convenience: upsert ease into Scheduling rows for a user.
-  # Creates the scheduling row (blank card, backfilled=false) if it doesn't exist yet.
-  def upsert_ease!(terms)
-    from = @user.target_language
-    to   = @user.source_language
+  # Convenience: upsert ease into Scheduling rows for a user, in a given drill
+  # direction (defaults to the learner's primary target→source). Creates the
+  # scheduling row (blank card, backfilled=false) if it doesn't exist yet.
+  # Ease is symmetric (same word pair), so the same score applies either way.
+  def upsert_ease!(terms, from: nil, to: nil)
+    from ||= @user.target_language
+    to   ||= @user.source_language
 
     score(terms).each do |scored|
       scheduling = Scheduling.find_or_initialize_by(

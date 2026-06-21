@@ -111,8 +111,10 @@ export default class extends Controller {
   }
 
   // Shuffle words, then sprinkle sentences in after a word (~1 in 3); rest at end.
+  // Under FSRS the server already orders words most-overdue/new first — preserve
+  // that order (don't shuffle) so the coaching survives the trip to the browser.
   buildSequence(words, sentences) {
-    const w = this.shuffle([...words])
+    const w = this.fsrsEnabledValue ? [...words] : this.shuffle([...words])
     const s = this.shuffle([...sentences])
     if (s.length === 0) return w
 

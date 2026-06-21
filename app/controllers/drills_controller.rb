@@ -58,32 +58,38 @@ class DrillsController < ApplicationController
   #
   # DRILL-CORE RECONCILIATION NOTE: sets @terms and @excluded_ids.
   # The legacy path also sets these so the shared build path below works.
+  # PRACTICE IS ALWAYS AVAILABLE — there is no such thing as "no words due" when
+  # the user wants to drill (product invariant; see memory
+  # language_app_practice_always_available). FSRS *coaches order* (most-overdue /
+  # new first) and drives retire-and-celebrate + ease, but it NEVER gates whether
+  # a word can be practiced. We hold back only intentional removals: retired
+  # (mastered, celebrated out), ease-1 cognates (auto-skip), archived (done forever).
   def play_fsrs
-    base_terms = select_terms(params[:deck]).includes(:translations, :schedulings)
+    base_terms = select_terms(params[:deck]).includes(:translations, :schedulings).to_a
 
-    # Pre-fill ease for any terms without a scheduling row yet.
-    new_terms = base_terms.select { |t| t.schedulings.none? { |s| s.user_id == current_user.id } }
-    EasePrefillService.new(current_user).upsert_ease!(new_terms) if new_terms.any?
+    # Every term needs a scheduling row for THIS direction (ease pips + retire read
+    # it). Idempotent; create blank rows where missing, then reload so the in-memory
+    # associations see them. This also fixes a never-drilled direction being empty.
+    new_terms = base_terms.reject do |t|
+      t.schedulings.any? { |s| s.user_id == current_user.id && s.from_language == @from && s.to_language == @to }
+    end
+    if new_terms.any?
+      EasePrefillService.new(current_user).upsert_ease!(new_terms, from: @from, to: @to)
+      ActiveRecord::Associations::Preloader.new(records: base_terms, associations: :schedulings).call
+    end
 
-    due_term_ids = current_user.schedulings
-                               .due_now(from: @from, to: @to)
-                               .pluck(:term_id)
-                               .to_set
+    retired_ids  = current_user.schedulings.retired
+                               .where(from_language: @from, to_language: @to).pluck(:term_id).to_set
+    cognate_ids  = current_user.schedulings.where(ease: 1).pluck(:term_id).to_set
+    archived_ids = current_user.schedulings.where(archived: true).pluck(:term_id).to_set
+    @excluded_ids = retired_ids | cognate_ids | archived_ids
 
-    # ease=1 cognates are auto-excluded (English cognate skip — #axis-4).
-    cognate_ids = current_user.schedulings
-                              .where(from_language: @from, to_language: @to, ease: 1)
-                              .pluck(:term_id)
-                              .to_set
-
-    # Archived words are permanently out (user said "done forever").
-    archived_ids = current_user.schedulings
-                               .where(from_language: @from, to_language: @to, archived: true)
-                               .pluck(:term_id)
-                               .to_set
-
-    @excluded_ids = cognate_ids | archived_ids
-    @terms = base_terms.select { |t| due_term_ids.include?(t.id) && !@excluded_ids.include?(t.id) }
+    # Order, don't gate: surface the most-overdue (and never-drilled) cards first.
+    due_by_term = current_user.schedulings
+                              .where(from_language: @from, to_language: @to)
+                              .pluck(:term_id, :due).to_h
+    @terms = base_terms.reject { |t| @excluded_ids.include?(t.id) }
+                       .sort_by { |t| due_by_term[t.id] || Time.at(0) }
   end
 
   # ── legacy path (feature flag off) ────────────────────────────────────────
