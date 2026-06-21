@@ -1,0 +1,1 @@
+../../../.claude/scripts/check-session-liveness.sh

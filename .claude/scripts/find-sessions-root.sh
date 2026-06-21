@@ -1,0 +1,1 @@
+../../../.claude/scripts/find-sessions-root.sh

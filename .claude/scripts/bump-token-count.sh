@@ -1,0 +1,1 @@
+../../../.claude/scripts/bump-token-count.sh

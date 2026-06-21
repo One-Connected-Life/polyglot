@@ -1,4 +1,4 @@
-# Kamal deploy for the language-app Dutch drill.
+# Kamal deploy for Polyglot (the language drill; serves on mynewwords.org).
 #
 # Shares the Hetzner box with oneconnectedlife, promise-tracker,
 # connectiongames (kamal-proxy on :80/:443, Host-routed) and quizzes
@@ -9,10 +9,10 @@
 # (HTTPS/a domain only becomes necessary when we add mic-based "speak your
 # answer" — browsers block getUserMedia on insecure origins.)
 
-service: language-app
+service: polyglot
 
 # Kamal prepends registry.server (ghcr.io). Personal namespace = bluemihai.
-image: bluemihai/language-app
+image: bluemihai/polyglot
 
 ssh:
   user: deploy
@@ -50,7 +50,7 @@ env:
 # Persist SQLite (production.sqlite3 + solid_* DBs) across deploys.
 # Container path matches Rails' storage/ dir.
 volumes:
-  - "language_app_storage:/rails/storage"
+  - "polyglot_storage:/rails/storage"
 
 # Mihai builds on arm64 Mac; Hetzner runs amd64. Explicit arch required.
 builder:

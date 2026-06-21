@@ -1,4 +1,4 @@
-# mynewwords (Polyglot)
+# Polyglot
 
 A custom-vocabulary drill that puts an Anki-grade spaced-repetition engine (FSRS)
 behind a UI a human actually enjoys — with AI-generated decks, IPA, etymology, and

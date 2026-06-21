@@ -36,3 +36,9 @@
 
 /app/assets/builds/*
 !/app/assets/builds/.keep
+
+# Claude session machinery — live/runtime state is never committed (#session-tooling).
+# settings.json + scripts/ ARE tracked; only per-session manifests are ignored.
+/.claude/sessions-active/
+/.claude/sessions-history/
+/.claude/settings.local.json

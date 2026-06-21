@@ -1,0 +1,1 @@
+../../../.claude/scripts/bump-heartbeat.sh

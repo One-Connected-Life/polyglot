@@ -1,0 +1,1 @@
+../../../.claude/scripts/archive-own-manifest.sh

@@ -1,0 +1,1 @@
+../../../.claude/scripts/update-manifest.sh
