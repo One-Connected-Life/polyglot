@@ -8,6 +8,10 @@ Rails.application.routes.draw do
 
   get "up" => "rails/health#show", as: :rails_health_check
 
+  # Transcription stack sanity check (issue 3) — hittable over HTTP so prod can be
+  # verified without a container shell. ?deep=1 runs a real end-to-end transcription.
+  get "up/audio" => "audio_health#show", as: :audio_health
+
   # PWA manifest (add-to-home-screen). Renders app/views/pwa/manifest.json.erb.
   get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
 
