@@ -30,6 +30,12 @@
 
 /public/assets
 
+# Real personal audio for testing the audio→vocab pipeline — NEVER committed.
+# Official/medical voicemails = personal data; this repo is public AGPL. README stays tracked
+# so the rule is visible. See docs/PRD-audio-to-vocab.md.
+/sample-audio/*
+!/sample-audio/README.md
+
 # Ignore key files for decrypting credentials and more.
 /config/*.key
 

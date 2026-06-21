@@ -11,9 +11,12 @@ class DeckGenerator
   COUNT = 30
   ENDPOINT = "https://api.anthropic.com/v1/messages"
 
-  def initialize(deck)
+  # transcript: when present, extract the vocabulary that actually appears in this text
+  # (audio→vocab, issue #3) instead of generating fresh words from deck.topic.
+  def initialize(deck, transcript: nil)
     @deck = deck
     @user = deck.user
+    @transcript = transcript.to_s.strip.presence
   end
 
   def call
@@ -25,6 +28,12 @@ class DeckGenerator
     @deck.update!(status: "failed")
     Rails.logger.error("[DeckGenerator] deck=#{@deck.id} #{e.class}: #{e.message}")
     raise
+  end
+
+  # Run extraction/generation only and return the raw word hashes, without persisting.
+  # Used by the audio test harness (lib/tasks/audio.rake) to preview a transcript's deck.
+  def candidate_words
+    fetch_words
   end
 
   private
@@ -42,10 +51,28 @@ class DeckGenerator
       '"translit": "<spelling-based romanization of the target word (e.g. Russian хлеб → khleb, final б = b even though pronounced p)>"' :
       '"translit": null'
 
-    prompt = <<~PROMPT
-      Generate #{COUNT} common, useful #{target} words or short phrases for the topic "#{@deck.topic}",
-      for a learner whose base language is #{source}.
+    task = if @transcript
+      <<~TASK
+        Below is a transcript of #{target} audio. Extract the useful vocabulary a learner
+        would need to understand it — the meaningful words and short phrases that ACTUALLY
+        APPEAR in the transcript. Up to #{COUNT} items, fewer if the transcript is short.
+        Do NOT invent words that are not in the transcript. Skip filler, names, and trivial
+        function words. For a learner whose base language is #{source}.
 
+        TRANSCRIPT:
+        \"\"\"
+        #{@transcript}
+        \"\"\"
+      TASK
+    else
+      <<~TASK
+        Generate #{COUNT} common, useful #{target} words or short phrases for the topic
+        "#{@deck.topic}", for a learner whose base language is #{source}.
+      TASK
+    end
+
+    prompt = <<~PROMPT
+      #{task}
       Return a JSON array. Each element is an object:
         {
           "target": "<the word in #{target}>",
