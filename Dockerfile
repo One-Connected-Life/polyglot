@@ -62,6 +62,11 @@ RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 # Compiles whisper.cpp's CLI statically (BUILD_SHARED_LIBS=OFF → one self-contained
 # binary, no .so juggling) and bakes a model into the image. "small" is a good
 # Dutch/CPU balance; bump WHISPER_MODEL_NAME to ggml-medium.bin for more accuracy.
+#
+# GGML_NATIVE=OFF avoids -march=native (breaks under the arm64→amd64 QEMU build),
+# but on its own it also disables ALL x86 SIMD → scalar fallback, ~5-10x slower
+# (a 1.6s clip 504'd in prod). So we explicitly enable the AVX2/FMA/F16C baseline:
+# portable across any modern x86-64-v3 CPU (every Hetzner box) AND fast.
 FROM base AS whisper
 ARG WHISPER_REF=v1.7.4
 ARG WHISPER_MODEL_NAME=ggml-small.bin
@@ -69,7 +74,8 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential cmake git curl && \
     git clone --depth 1 --branch ${WHISPER_REF} https://github.com/ggerganov/whisper.cpp /tmp/whisper && \
     cmake -S /tmp/whisper -B /tmp/whisper/build \
-        -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DGGML_NATIVE=OFF \
+        -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF \
+        -DGGML_NATIVE=OFF -DGGML_AVX=ON -DGGML_AVX2=ON -DGGML_FMA=ON -DGGML_F16C=ON \
         -DWHISPER_BUILD_TESTS=OFF -DWHISPER_BUILD_EXAMPLES=ON && \
     cmake --build /tmp/whisper/build --target whisper-cli -j "$(nproc)" && \
     mkdir -p /opt/whisper/bin /opt/whisper/models && \
