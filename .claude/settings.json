@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/scripts/session-boot.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/session-boot.sh\"",
             "timeout": 30,
             "statusMessage": "Booting session..."
           }
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/scripts/bump-heartbeat.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/bump-heartbeat.sh\"",
             "timeout": 3
           }
         ]
@@ -28,12 +28,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/scripts/bump-heartbeat.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/bump-heartbeat.sh\"",
             "timeout": 3
           },
           {
             "type": "command",
-            "command": "bash .claude/scripts/bump-token-count.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/bump-token-count.sh\"",
             "timeout": 5
           }
         ]
@@ -44,7 +44,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/scripts/archive-own-manifest.sh session-end",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/archive-own-manifest.sh\" session-end",
             "timeout": 5
           }
         ]
@@ -55,7 +55,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/scripts/session-title-hook.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/scripts/session-title-hook.sh\"",
             "timeout": 5
           }
         ]
