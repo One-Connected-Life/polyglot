@@ -10,7 +10,8 @@ enjoys: AI-generated decks, IPA, etymology, a multi-language weave, and audio→
 This is a solo repo and Mihai wants what you build usable on his phone fast. **Once a
 feature builds and its tests pass, deploy it** — don't stop to ask for permission.
 
-- Deploy is **manual**: `rake deploy` (Kamal; reads `KAMAL_REGISTRY_PASSWORD` from `.env`).
+- Deploy is **manual**: `bin/kamal deploy` (reads `KAMAL_REGISTRY_PASSWORD` from `.env`;
+  load `.env` into the shell first — there's no `rake deploy` wrapper task).
   Pushing to `main` only runs CI (`.github/workflows/ci.yml`) — it does **not** auto-deploy.
   So actually run the deploy; don't assume a push shipped it.
 - The only bar is **green, not broken**: deploy working code, never something that 500s.
