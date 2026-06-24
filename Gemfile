@@ -22,6 +22,11 @@ gem "jbuilder"
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 gem "bcrypt", "~> 3.1.7"
 
+# Social login (Google + Facebook) via OmniAuth — additive to email/password (oauth-providers).
+gem "omniauth-google-oauth2"
+gem "omniauth-facebook"
+gem "omniauth-rails_csrf_protection"
+
 # FSRS spaced-repetition algorithm (rb-fsrs, MIT).
 # Used for the scheduling table; gated behind FSRS_ENABLED feature flag (#axis-4).
 gem "fsrs", "~> 0.9"

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_24_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_24_140001) do
   create_table "attempts", force: :cascade do |t|
     t.boolean "correct", default: false, null: false
     t.datetime "created_at", null: false
@@ -104,6 +104,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_24_140000) do
   end
 
   create_table "users", force: :cascade do |t|
+    t.string "avatar_url"
     t.datetime "created_at", null: false
     t.string "drill_direction", default: "forward"
     t.string "drill_order", default: "smart", null: false
@@ -111,11 +112,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_24_140000) do
     t.integer "generations_count", default: 0, null: false
     t.string "learning_languages"
     t.string "name"
-    t.string "password_digest", null: false
+    t.string "password_digest"
+    t.string "provider"
     t.string "source_language", default: "en", null: false
     t.string "target_language"
+    t.string "uid"
     t.datetime "updated_at", null: false
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
+    t.index ["provider", "uid"], name: "index_users_on_provider_and_uid", unique: true, where: "provider IS NOT NULL AND uid IS NOT NULL"
   end
 
   add_foreign_key "attempts", "terms"
