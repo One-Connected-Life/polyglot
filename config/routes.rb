@@ -12,6 +12,43 @@ Rails.application.routes.draw do
   get "onboarding", to: "onboarding#show"
   patch "onboarding", to: "onboarding#update"
 
+  # ── Versioned JSON API for native clients (iOS/Android) ─────────────────────
+  # Token auth (Authorization: Bearer <session.api_token>), not the cookie flow.
+  # Mirrors the web controllers exactly — same models, same services, same shapes.
+  namespace :api do
+    namespace :v1 do
+      post   "sessions",      to: "sessions#create"   # email_address + password → { token, user }
+      delete "session",       to: "sessions#destroy"  # revoke the bearer token
+      post   "registrations", to: "registrations#create"
+
+      get   "me",         to: "me#show"
+      patch "onboarding", to: "onboarding#update"
+
+      get  "drills/play", to: "drills#play"
+      post "attempts",    to: "attempts#create"
+      get  "stats",       to: "stats#index"
+
+      resources :terms, only: [:show] do
+        member do
+          patch :ease
+          patch :unretire
+        end
+      end
+
+      resources :decks, only: [:index, :create, :destroy] do
+        member do
+          get   :review
+          patch :review, action: :update_review
+          post  :expand
+        end
+      end
+
+      resources :audio_decks, only: [:create]
+
+      get "languages", to: "languages#index"
+    end
+  end
+
   get "up" => "rails/health#show", as: :rails_health_check
 
   # Transcription stack sanity check (issue 3) — hittable over HTTP so prod can be
