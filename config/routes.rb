@@ -3,6 +3,12 @@ Rails.application.routes.draw do
   resource :registration, only: [:new, :create]
   resources :passwords, param: :token
 
+  # Social login (Google + Facebook) via OmniAuth. The provider kicks the flow off
+  # at GET/POST /auth/:provider (handled by OmniAuth middleware), then redirects back
+  # to this callback. Failures route to #omniauth_failure (see omniauth.rb).
+  get  "/auth/:provider/callback", to: "sessions#omniauth", as: :omniauth_callback
+  get  "/auth/failure",            to: "sessions#omniauth_failure"
+
   get "onboarding", to: "onboarding#show"
   patch "onboarding", to: "onboarding#update"
 

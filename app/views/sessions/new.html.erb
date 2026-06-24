@@ -20,6 +20,36 @@
     <%= f.submit "Sign in", class: primary_button_classes %>
   <% end %>
 
+  <%# Social login (oauth-providers). Each button renders ONLY when its provider's
+      ENV credentials are configured, so prod isn't broken before creds are set.
+      button_to issues a POST to /auth/<provider>, required by
+      omniauth-rails_csrf_protection. %>
+  <% google_on   = ENV["GOOGLE_CLIENT_ID"].present? && ENV["GOOGLE_CLIENT_SECRET"].present? %>
+  <% facebook_on = ENV["FACEBOOK_APP_ID"].present?  && ENV["FACEBOOK_APP_SECRET"].present? %>
+  <% if google_on || facebook_on %>
+    <div class="mt-6 flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
+      <span class="h-px flex-1 bg-gray-200 dark:bg-gray-700"></span>
+      <span>or</span>
+      <span class="h-px flex-1 bg-gray-200 dark:bg-gray-700"></span>
+    </div>
+
+    <div class="mt-4 space-y-3">
+      <% if google_on %>
+        <%= button_to "/auth/google_oauth2", data: { turbo: false },
+              class: "flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800" do %>
+          Continue with Google
+        <% end %>
+      <% end %>
+
+      <% if facebook_on %>
+        <%= button_to "/auth/facebook", data: { turbo: false },
+              class: "flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800" do %>
+          Continue with Facebook
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
   <div class="mt-6 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
     <%= link_to "Create an account", new_registration_path, class: "font-medium text-gray-900 underline dark:text-gray-100" %>
     <%= link_to "Forgot password?", new_password_path, class: "hover:underline" %>
