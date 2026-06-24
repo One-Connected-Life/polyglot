@@ -25,6 +25,8 @@
   </div>
 </header>
 
+<%= render "drills/translate_box" %>
+
 <% if generating.any? %>
   <div class="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200">
     ⏳ Generating <%= generating.map(&:name).to_sentence %>… this page refreshes itself.

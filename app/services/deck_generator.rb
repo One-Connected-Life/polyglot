@@ -145,69 +145,16 @@ class DeckGenerator
     ENV["ANTHROPIC_API_KEY"].presence || raise(Error, "ANTHROPIC_API_KEY is not set")
   end
 
-  # Models often repeat the article inside the word ("la cuisine" + article "la").
-  # Strip it so with_article doesn't double it ("la la cuisine").
-  def strip_redundant_article(text, article)
-    return text if article.blank?
-
-    art = article.to_s.strip
-    pattern = art.end_with?("'") ? /\A#{Regexp.escape(art)}\s*/i : /\A#{Regexp.escape(art)}\s+/i
-    text.sub(pattern, "")
-  end
-
   # Target-language words already on the deck — used to tell the model what NOT to
   # repeat when appending a fresh cohort to an existing topic deck.
   def existing_target_words
-    target = @user.target_language
-    @deck.terms.flat_map(&:translations)
-         .select { |tr| tr.language == target }
-         .filter_map { |tr| tr.text.presence }
+    @deck.existing_target_words
   end
 
+  # Append → reviewed: false (awaits the user). Fresh build → reviewed (deck status
+  # gates it instead), so it drills immediately once the deck is accepted. Word
+  # creation/dedupe/phonetics now lives on Deck#absorb (shared with Translate, #10).
   def persist(words)
-    target = @user.target_language
-    source = @user.source_language
-    # Skip words already on the deck (matters for append) plus dupes within this batch.
-    seen = existing_target_words.map(&:downcase).to_set
-    position = @deck.terms.maximum(:position) || 0
-
-    Term.transaction do
-      words.each do |w|
-        article = w["article"].presence
-        t = strip_redundant_article(w["target"].to_s.strip, article)
-        s = w["source"].to_s.strip
-        next if t.blank? || s.blank?
-
-        key = t.downcase
-        next if seen.include?(key)
-        seen << key
-
-        phonetics_json = build_phonetics_json(w, target)
-
-        # Append → reviewed: false (awaits the user). Fresh build → reviewed (deck
-        # status gates it instead), so it drills immediately once the deck is accepted.
-        term = @deck.terms.create!(kind: "word", position: (position += 1), reviewed: !@append)
-        term.translations.create!(
-          language: target, text: t, article: article,
-          etymology: w["etymology"].presence, mnemonic: w["mnemonic"].presence,
-          phonetics: phonetics_json
-        )
-        term.translations.create!(language: source, text: s)
-      end
-    end
-  end
-
-  # Build the phonetics JSON string for a word entry.
-  # Non-Latin languages get both ipa + translit; Latin-script langs get ipa only.
-  def build_phonetics_json(word, target_code)
-    ipa = word["ipa"].to_s.strip.presence
-    return nil if ipa.nil?
-
-    data = { "ipa" => ipa }
-    if Translation::NON_LATIN.include?(target_code)
-      translit = word["translit"].to_s.strip.presence
-      data["translit"] = translit if translit
-    end
-    JSON.generate(data)
+    @deck.absorb(words, reviewed: !@append)
   end
 end

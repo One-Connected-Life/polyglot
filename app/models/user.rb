@@ -21,6 +21,19 @@ class User < ApplicationRecord
   # Cost guard: cap AI deck generations per user (Mihai's API key pays for all).
   GENERATION_CAP = 25
 
+  # The single rolling deck that Translate captures melt into (issue #10).
+  MY_WORDS_SLUG = "my-words"
+
+  # Find-or-create the user's "My Words" deck — always drillable (status "ready"),
+  # not topic-based (no auto-expand), captured words append into it.
+  def my_words_deck
+    decks.find_or_create_by!(slug: MY_WORDS_SLUG) do |d|
+      d.name     = "My Words"
+      d.status   = "ready"
+      d.position = (decks.maximum(:position) || -1) + 1
+    end
+  end
+
   # Onboarded once they've chosen what they're learning.
   def onboarded?
     target_language.present?

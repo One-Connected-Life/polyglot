@@ -17,6 +17,10 @@ Rails.application.routes.draw do
 
   root "drills#home"
 
+  # Translate-first home (issue #10): translate target-lang text → source, optionally
+  # capturing the words into the rolling "My Words" deck.
+  post "translate", to: "translate#create", as: :translate
+
   # The drill runner: ?deck=<slug|all|misses>&from=<lang>&to=<lang>
   get "play", to: "drills#play", as: :play
 
