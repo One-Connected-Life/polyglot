@@ -77,6 +77,26 @@ RSpec.describe "Translate", type: :request do
     expect(deck.terms.count).to eq(2)
   end
 
+  it "reads text from an uploaded image, then translates and captures it" do
+    allow_any_instance_of(ImageReader).to receive(:call).and_return("brood")
+    stub_translator([{ "target" => "brood", "source" => "bread" }])
+    image = Rack::Test::UploadedFile.new(StringIO.new("imgbytes"), "image/jpeg", original_filename: "sign.jpg")
+
+    post translate_path, params: { image: image, capture: "1" }
+
+    expect(response).to have_http_status(:ok)
+    deck = user.decks.find_by(slug: User::MY_WORDS_SLUG)
+    expect(deck.terms.first.translation("nl").text).to eq("brood")
+  end
+
+  it "redirects home when no target-language text is found in the image" do
+    allow_any_instance_of(ImageReader).to receive(:call).and_return("")
+    image = Rack::Test::UploadedFile.new(StringIO.new("imgbytes"), "image/jpeg", original_filename: "blank.jpg")
+
+    post translate_path, params: { image: image, capture: "1" }
+    expect(response).to redirect_to(root_path)
+  end
+
   it "redirects home with an alert on blank text" do
     post translate_path, params: { text: "  ", capture: "1" }
     expect(response).to redirect_to(root_path)

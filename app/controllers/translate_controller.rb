@@ -10,6 +10,15 @@ class TranslateController < ApplicationController
     text = params[:text].to_s.strip
     capture = params[:capture] == "1"
 
+    # An uploaded photo (sign/menu/letter) → read its target-language text first, then
+    # translate that. Image bytes stay in memory only — never persisted (#10 privacy).
+    if params[:image].present?
+      text = ImageReader.new(current_user, params[:image]).call
+      if text.blank?
+        return redirect_to root_path, alert: "Couldn't read any #{current_user.target_language_name} text in that image."
+      end
+    end
+
     if text.blank?
       return redirect_to root_path, alert: "Type a word or phrase to translate."
     end
@@ -36,8 +45,8 @@ class TranslateController < ApplicationController
     end
 
     render :show
-  rescue Translator::Error => e
-    Rails.logger.error("[Translate] #{e.message}")
-    redirect_to root_path, alert: "Translation failed — give it another try."
+  rescue Translator::Error, ImageReader::Error => e
+    Rails.logger.error("[Translate] #{e.class}: #{e.message}")
+    redirect_to root_path, alert: "That didn't work — give it another try."
   end
 end

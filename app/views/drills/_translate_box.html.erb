@@ -8,11 +8,19 @@
             placeholder: "Translate a #{current_user.target_language_name} word, phrase, or paste text…",
             class: "w-full resize-none border-0 bg-transparent text-lg leading-relaxed placeholder:text-gray-400 focus:outline-none focus:ring-0 dark:placeholder:text-gray-500" %>
       <div class="mt-2 flex items-center justify-between gap-3 border-t border-gray-100 pt-3 dark:border-gray-800">
-        <label class="flex cursor-pointer select-none items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-          <%= check_box_tag :capture, "1", true,
-                class: "h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900 dark:border-gray-600 dark:bg-gray-800" %>
-          capture to my words
-        </label>
+        <div class="flex items-center gap-3">
+          <label class="flex cursor-pointer select-none items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+            <%= check_box_tag :capture, "1", true,
+                  class: "h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900 dark:border-gray-600 dark:bg-gray-800" %>
+            capture to my words
+          </label>
+          <%# Snap/upload a photo — auto-submits on pick, so a sign/menu translates in one tap. %>
+          <label class="flex cursor-pointer select-none items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100" title="Read text from a photo">
+            <span>📷</span><span class="hidden sm:inline">photo</span>
+            <%= f.file_field :image, accept: "image/*", capture: "environment", class: "sr-only",
+                  data: { controller: "auto-submit", action: "change->auto-submit#submit" } %>
+          </label>
+        </div>
         <%= f.submit "Translate",
               class: "rounded-lg bg-gray-900 px-5 py-2 text-sm font-medium text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white" %>
       </div>
