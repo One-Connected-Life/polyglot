@@ -43,6 +43,8 @@ env:
   secret:
     - RAILS_MASTER_KEY
     - ANTHROPIC_API_KEY   # AI deck generation (Mihai's key; per-user cap guards cost)
+    - GOOGLE_CLIENT_ID      # Google social login (#9)
+    - GOOGLE_CLIENT_SECRET  # Google social login (#9)
   clear:
     SOLID_QUEUE_IN_PUMA: true
     FSRS_ENABLED: 1   # FSRS scheduling + retire-and-celebrate + ease (#5). Flipped on 2026-06-20.
