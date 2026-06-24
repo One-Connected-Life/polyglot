@@ -38,11 +38,19 @@ RSpec.describe User, type: :model do
       expect(g.id).not_to eq(f.id)
     end
 
-    it "does NOT auto-link to an existing password account sharing the email (returns unsaved)" do
-      create(:user, email_address: "taken@example.com") # password account
-      result = User.from_omniauth(auth_hash(uid: "999", email: "taken@example.com"))
+    it "LINKS a verified-email provider (Google) onto an existing password account" do
+      existing = create(:user, email_address: "taken@example.com") # password account
+      result = User.from_omniauth(auth_hash(provider: "google_oauth2", uid: "999", email: "taken@example.com"))
+      expect(result).to be_persisted
+      expect(result.id).to eq(existing.id)        # same account, now linked
+      expect(result.provider).to eq("google_oauth2")
+      expect(result.uid).to eq("999")
+    end
+
+    it "does NOT link an UNVERIFIED-email provider to an existing password account (returns unsaved)" do
+      create(:user, email_address: "taken2@example.com") # password account
+      result = User.from_omniauth(auth_hash(provider: "facebook", uid: "888", email: "taken2@example.com"))
       expect(result).not_to be_persisted
-      expect(result.errors[:email_address]).to be_present
     end
 
     it "creates an OAuth user with no password and still validates" do

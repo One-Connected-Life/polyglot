@@ -94,33 +94,57 @@ class User < ApplicationRecord
 
   # Find-or-create a user from an OmniAuth auth hash.
   #
-  # Email-collision policy (documented, deliberately conservative):
-  #   We key the OAuth identity on [provider, uid] — the provider's stable user id,
-  #   never the email. If a [provider, uid] row exists we sign that user in.
-  #   Otherwise we create a NEW OAuth user. We do NOT auto-link an OAuth login to a
-  #   pre-existing email/password account that happens to share the same email,
-  #   because the email coming back from the provider is attacker-influenceable for
-  #   some providers and silent account-takeover is the classic OAuth pitfall.
-  #   So if someone signed up with email+password and later "Continue with Google"
-  #   using the same address, account creation fails on the unique email index and
-  #   `from_omniauth` returns an unsaved, invalid User — the caller surfaces a
-  #   "sign in with your password instead" message. Explicit account-linking (while
-  #   already signed in) is a deliberate future feature, not an implicit side effect.
+  # Identity is keyed on [provider, uid] (the provider's stable id), never email.
+  # Email-collision policy:
+  #   - [provider, uid] already exists                  → sign that user in.
+  #   - email matches an existing account AND the provider VERIFIED the email
+  #     (Google does) → LINK the identity onto that account and sign in. A verified
+  #     email means the provider proved the person controls the address, so linking
+  #     is safe — and it spares the legit owner the "use your password" dead-end.
+  #   - email matches but is NOT verified (unverified provider) → refuse to link
+  #     (the classic OAuth account-takeover vector); return an unsaved User so the
+  #     caller steers them to password sign-in.
+  #   - no email match                                  → create a new OAuth user.
   def self.from_omniauth(auth)
     provider = auth.provider.to_s
     uid      = auth.uid.to_s
     info     = auth.info || {}
+    email    = (info["email"] || info[:email]).to_s.strip.downcase
 
     user = find_by(provider: provider, uid: uid)
     return user if user
 
+    if email.present? && (existing = find_by(email_address: email))
+      # Unverified provider email → don't link; unsaved User triggers the
+      # "sign in with your password instead" path in the caller.
+      return new(email_address: email) unless provider_email_verified?(auth)
+
+      existing.update(
+        provider:   provider,
+        uid:        uid,
+        name:       existing.name.presence       || info["name"]  || info[:name],
+        avatar_url: existing.avatar_url.presence || info["image"] || info[:image]
+      )
+      return existing
+    end
+
     create do |u|
       u.provider      = provider
       u.uid           = uid
-      u.email_address = info["email"] || info[:email]
+      u.email_address = email
       u.name          = info["name"]  || info[:name]
       u.avatar_url    = info["image"] || info[:image]
     end
+  end
+
+  # A provider "verifies" an email when it proves the person controls it. Google
+  # always verifies the account email, so we trust google_oauth2 outright; other
+  # providers must send an explicit truthy email_verified flag.
+  def self.provider_email_verified?(auth)
+    return true if auth.provider.to_s == "google_oauth2"
+    flag = auth.info && auth.info["email_verified"]
+    flag = auth.dig("extra", "raw_info", "email_verified") if flag.nil?
+    ActiveModel::Type::Boolean.new.cast(flag)
   end
 
   private

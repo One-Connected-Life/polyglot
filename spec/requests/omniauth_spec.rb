@@ -50,14 +50,17 @@ RSpec.describe "OmniAuth callback", type: :request do
     expect(response).to have_http_status(:ok)
   end
 
-  it "refuses to take over an existing password account with the same email" do
-    create(:user, email_address: "collide@example.com", password: "password")
+  it "LINKS a verified-email Google login onto an existing password account (no takeover dead-end)" do
+    existing = create(:user, email_address: "collide@example.com", password: "password")
     stub_google(uid: "google-collide", email: "collide@example.com")
     expect {
       get "/auth/google_oauth2/callback"
-    }.not_to change(User, :count)
-    expect(response).to redirect_to(new_session_path)
-    expect(flash[:alert]).to match(/password account/i)
+    }.not_to change(User, :count)                 # linked onto the existing account, not created
+    existing.reload
+    expect(existing.provider).to eq("google_oauth2")
+    expect(existing.uid).to eq("google-collide")
+    expect(response.cookies["session_id"]).to be_present  # actually signed in
+    expect(response).to redirect_to(root_path)
   end
 
   it "redirects to sign-in with a flash on provider failure" do
