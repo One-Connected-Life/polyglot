@@ -48,3 +48,10 @@
 /.claude/sessions-active/
 /.claude/sessions-history/
 /.claude/settings.local.json
+
+# Skills symlinked in from the private OCL repo (plan/spike/bug-fix/bug-report).
+# Local-only convenience — never commit private-repo pointers into this public repo.
+/.claude/skills/plan
+/.claude/skills/spike
+/.claude/skills/bug-fix
+/.claude/skills/bug-report
