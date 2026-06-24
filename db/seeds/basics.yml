@@ -2860,64 +2860,64 @@
   ru: как дела?
   key: social-phrases/how-are-you
 - deck: 'Basics: Verbs'
-  en: I am
+  en: I am ___
   type: verb
-  nl: ik ben
-  es: yo soy
-  fr: je suis
-  it: io sono
-  ro: eu sunt
-  ru: я есть
+  nl: ik ben ___
+  es: yo soy ___
+  fr: je suis ___
+  it: io sono ___
+  ro: eu sunt ___
+  ru: я ___
   key: verbs/i-am
 - deck: 'Basics: Verbs'
-  en: you are
+  en: you are ___
   type: verb
-  nl: jij bent
-  es: tú eres
-  fr: tu es
-  it: tu sei
-  ro: tu ești
-  ru: ты есть
+  nl: jij bent ___
+  es: tú eres ___
+  fr: tu es ___
+  it: tu sei ___
+  ro: tu ești ___
+  ru: ты ___
   key: verbs/you-are
 - deck: 'Basics: Verbs'
-  en: he is
+  en: he is ___
   type: verb
-  nl: hij is
-  es: él es
-  fr: il est
-  it: lui è
-  ro: el este
-  ru: он есть
+  nl: hij is ___
+  es: él es ___
+  fr: il est ___
+  it: lui è ___
+  ro: el este ___
+  ru: он ___
   key: verbs/he-is
 - deck: 'Basics: Verbs'
-  en: she is
+  en: she is ___
   type: verb
-  nl: zij is
-  es: ella es
-  fr: elle est
-  it: lei è
-  ro: ea este
-  ru: она есть
+  nl: zij is ___
+  es: ella es ___
+  fr: elle est ___
+  it: lei è ___
+  ro: ea este ___
+  ru: она ___
   key: verbs/she-is
 - deck: 'Basics: Verbs'
-  en: we are
+  en: we are ___
   type: verb
-  nl: wij zijn
-  es: nosotros somos
-  fr: nous sommes
-  it: noi siamo
-  ro: noi suntem
-  ru: мы есть
+  nl: wij zijn ___
+  es: nosotros somos ___
+  fr: nous sommes ___
+  it: noi siamo ___
+  ro: noi suntem ___
+  ru: мы ___
   key: verbs/we-are
 - deck: 'Basics: Verbs'
-  en: they are
+  en: they are ___
   type: verb
-  nl: zij zijn
-  es: ellos son
-  fr: ils sont
-  it: loro sono
-  ro: ei sunt
-  ru: они есть
+  nl: zij zijn ___
+  es: ellos son ___
+  fr: ils sont ___
+  it: loro sono ___
+  ro: ei sunt ___
+  ru: они ___
   key: verbs/they-are
 - deck: 'Basics: Verbs'
   en: I was
