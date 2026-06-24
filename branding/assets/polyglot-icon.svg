@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="Polyglot concept 3 — weave">
+  <!-- Concept 3: The Weave.  Three strands (three languages) braiding over/under each
+       other — the multi-language weave that defines the app. Reads as a clean knot.
+       Palette: indigo #2D2A6E, coral #FF6F61, sky #36C5C0  (on paper #FAF8F3) -->
+  <defs>
+    <clipPath id="c3field"><rect x="0" y="0" width="1024" height="1024" rx="228" ry="228"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#c3field)">
+    <!-- field -->
+    <rect x="0" y="0" width="1024" height="1024" fill="#FAF8F3"/>
+
+    <!-- A symmetrical 3-strand braid running top->bottom. The over/under rhythm is
+         created by drawing a paper "gap" stroke under each strand that should pass
+         behind, then the strand itself. Order = back to front. -->
+    <g fill="none" stroke-width="78" stroke-linecap="round">
+
+      <!-- LEFT strand (indigo) full path -->
+      <path id="sA" d="M512 250
+                       C 300 330, 300 430, 512 512
+                       C 724 594, 724 694, 512 774"
+            stroke="#2D2A6E"/>
+
+      <!-- RIGHT strand (sky): paper gaps at the two crossings, then the strand -->
+      <path d="M512 250 C 724 330, 724 430, 512 512 C 300 594, 300 694, 512 774"
+            stroke="#FAF8F3" stroke-width="120"/>
+      <path d="M512 250 C 724 330, 724 430, 512 512 C 300 594, 300 694, 512 774"
+            stroke="#36C5C0"/>
+
+      <!-- re-draw the indigo's lower crossing on top so over/under alternates -->
+      <path d="M512 512 C 724 594, 724 694, 512 774"
+            stroke="#FAF8F3" stroke-width="120"/>
+      <path d="M512 512 C 724 594, 724 694, 512 774"
+            stroke="#2D2A6E"/>
+
+      <!-- CENTER strand (coral): a gentle S threading the middle, on top at center -->
+      <path d="M512 250 C 470 400, 554 600, 512 774"
+            stroke="#FAF8F3" stroke-width="120"/>
+      <path d="M512 250 C 470 400, 554 600, 512 774"
+            stroke="#FF6F61"/>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" width="1200" height="320" role="img" aria-label="Polyglot — concept 3 lockup">
+  <rect width="1200" height="320" fill="#FAF8F3"/>
+
+  <!-- mark (concept 3, scaled into a 240 box) -->
+  <g transform="translate(56 40) scale(0.2148)">
+    <rect x="0" y="0" width="1024" height="1024" rx="228" fill="#FAF8F3"/>
+    <g fill="none" stroke-width="78" stroke-linecap="round">
+      <path d="M512 250 C 300 330, 300 430, 512 512 C 724 594, 724 694, 512 774" stroke="#2D2A6E"/>
+      <path d="M512 250 C 724 330, 724 430, 512 512 C 300 594, 300 694, 512 774" stroke="#FAF8F3" stroke-width="120"/>
+      <path d="M512 250 C 724 330, 724 430, 512 512 C 300 594, 300 694, 512 774" stroke="#36C5C0"/>
+      <path d="M512 512 C 724 594, 724 694, 512 774" stroke="#FAF8F3" stroke-width="120"/>
+      <path d="M512 512 C 724 594, 724 694, 512 774" stroke="#2D2A6E"/>
+      <path d="M512 250 C 470 400, 554 600, 512 774" stroke="#FAF8F3" stroke-width="120"/>
+      <path d="M512 250 C 470 400, 554 600, 512 774" stroke="#FF6F61"/>
+    </g>
+  </g>
+
+  <!-- wordmark -->
+  <text x="350" y="196"
+        font-family="'Inter','Helvetica Neue',Helvetica,'Segoe UI',Arial,sans-serif"
+        font-size="148" font-weight="700" letter-spacing="-4" fill="#2D2A6E">Poly<tspan fill="#FF6F61">glot</tspan></text>
+</svg>
