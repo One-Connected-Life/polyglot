@@ -14,6 +14,7 @@ class User < ApplicationRecord
   validates :target_language, inclusion: { in: Translation::LANGUAGES.keys }, allow_nil: true
   validates :source_language, inclusion: { in: Translation::LANGUAGES.keys }
   validates :drill_direction, inclusion: { in: %w[forward random] }
+  validates :drill_order, inclusion: { in: %w[smart shuffle] }
   validate :target_differs_from_source
   validate :learning_languages_are_valid
 

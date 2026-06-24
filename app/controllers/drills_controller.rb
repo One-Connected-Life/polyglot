@@ -14,6 +14,12 @@ class DrillsController < ApplicationController
     session[:skip_easy] = params[:skip_easy] == "1" if params.key?(:skip_easy)
     @skip_easy = session[:skip_easy] || false
 
+    # Persistent drill-order setting (smart = FSRS order w/ randomized ties; shuffle = random).
+    if %w[smart shuffle].include?(params[:order]) && current_user.drill_order != params[:order]
+      current_user.update!(drill_order: params[:order])
+    end
+    @drill_order = current_user.drill_order
+
     # Multi-language drill: source → N targets in a sequential-reveal card.
     # Activated when multi=1 is in the params (set from the home deck picker).
     @multi = params[:multi] == "1" && current_user.multi_language_drill?
@@ -30,6 +36,13 @@ class DrillsController < ApplicationController
       play_fsrs
     else
       play_legacy
+    end
+
+    # Keep the "Recent sentences" pool fresh from recently-practiced words, in the
+    # background — never blocks this drill. Fresh sentences flow into the sprinkle pool
+    # on the next drill (see SentenceGenerator). Skip when drilling the sentence deck itself.
+    if !@is_sentence_deck && SentenceGenerator.stale?(current_user)
+      GenerateSentencesJob.perform_later(current_user)
     end
 
     if @multi
@@ -90,8 +103,16 @@ class DrillsController < ApplicationController
     due_by_term = current_user.schedulings
                               .where(from_language: @from, to_language: @to)
                               .pluck(:term_id, :due).to_h
-    @terms = base_terms.reject { |t| @excluded_ids.include?(t.id) }
-                       .sort_by { |t| due_by_term[t.id] || Time.at(0) }
+    pool = base_terms.reject { |t| @excluded_ids.include?(t.id) }
+    @terms =
+      if current_user.drill_order == "shuffle"
+        pool.shuffle # fully random across all cards
+      else
+        # FSRS due-order, but ties (esp. never-drilled, which all share the epoch
+        # fallback) get a random tiebreaker — otherwise verb conjugations come out in
+        # insertion order (I/you/he/…). The rand key is computed once per card. (#drill-order)
+        pool.sort_by { |t| [(due_by_term[t.id] || Time.at(0)).to_f, rand] }
+      end
   end
 
   # ── legacy path (feature flag off) ────────────────────────────────────────

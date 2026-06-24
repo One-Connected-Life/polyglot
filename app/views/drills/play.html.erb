@@ -43,6 +43,11 @@
                   play_path(deck: @deck_slug, from: @from, to: @to, skip_easy: @skip_easy ? "0" : "1"),
                   class: "hover:underline" %>
           </div>
+          <div>
+            <%= link_to (@drill_order == "shuffle" ? "order: shuffle" : "order: smart"),
+                  play_path(deck: @deck_slug, from: @from, to: @to, skip_easy: @skip_easy ? "1" : "0", order: @drill_order == "shuffle" ? "smart" : "shuffle"),
+                  class: "hover:underline", title: "smart = spaced-repetition order (ties randomized) · shuffle = fully random" %>
+          </div>
           <% if current_user.multi_language_drill? %>
             <div><%= link_to "drill all #{current_user.active_learning_languages.size} languages", play_path(deck: @deck_slug, from: @from, multi: "1"), class: "hover:underline" %></div>
           <% end %>
