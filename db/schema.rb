@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_21_125832) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_24_100304) do
   create_table "attempts", force: :cascade do |t|
     t.boolean "correct", default: false, null: false
     t.datetime "created_at", null: false
@@ -77,9 +77,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_21_125832) do
   create_table "terms", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "deck_id", null: false
+    t.string "key"
     t.string "kind", default: "word", null: false
     t.integer "position", default: 0, null: false
     t.datetime "updated_at", null: false
+    t.index ["deck_id", "key"], name: "index_terms_on_deck_id_and_key", unique: true, where: "key IS NOT NULL"
     t.index ["deck_id"], name: "index_terms_on_deck_id"
     t.index ["kind"], name: "index_terms_on_kind"
   end

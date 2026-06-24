@@ -108,6 +108,26 @@
     </div>
   </div>
 
+  <%# ── Basics: All — one drill across the whole foundation (pronouns…verbs…numbers) ── %>
+  <% if @basics_count.to_i > 0 %>
+    <div class="mb-8 flex items-center justify-between gap-4 rounded-lg border border-gray-300 bg-white px-4 py-4 dark:border-gray-700 dark:bg-gray-900">
+      <div>
+        <%= link_to "Basics: All", play_path(deck: "basics", from: target, to: source), class: "text-base font-semibold hover:underline" %>
+        <p class="text-xs text-gray-500 dark:text-gray-400">the whole foundation, shuffled · <%= pluralize(@basics_count, "card") %></p>
+      </div>
+      <div class="flex flex-wrap items-center justify-end gap-2 text-xs">
+        <%= link_to "#{source.upcase} → #{target.upcase}", play_path(deck: "basics", from: source, to: target),
+              class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
+        <%= link_to "#{target.upcase} → #{source.upcase}", play_path(deck: "basics", from: target, to: source),
+              class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
+        <% if current_user.multi_language_drill? %>
+          <%= link_to "#{source.upcase} → all #{learning.size}", play_path(deck: "basics", from: source, multi: "1"),
+                class: "rounded-md border border-gray-900 bg-gray-900 px-2.5 py-1 text-white hover:bg-gray-700 dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white" %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
   <div class="mb-3 flex items-center justify-between">
     <p class="text-xs uppercase tracking-wide text-gray-400">your decks</p>
     <div class="flex items-center gap-3">
@@ -116,26 +136,43 @@
     </div>
   </div>
 
-  <ul class="divide-y divide-gray-200 border-y border-gray-200 dark:divide-gray-800 dark:border-gray-800">
-    <% @decks.each do |deck| %>
-      <% next unless deck.status == "ready" && deck.terms.any? %>
-      <li class="flex items-center justify-between gap-4 py-4">
-        <div>
-          <%= link_to deck.name, play_path(deck: deck.slug, from: source, to: target), class: "text-base font-medium hover:underline" %>
+  <% ready_decks = @decks.select { |d| d.status == "ready" && d.terms.any? } %>
+  <% th = "px-3 py-2 text-left font-semibold cursor-pointer select-none whitespace-nowrap hover:bg-gray-100 dark:hover:bg-gray-800" %>
+  <div data-controller="sortable-table" class="overflow-x-auto">
+    <table class="w-full border-collapse text-sm">
+      <thead>
+        <tr class="border-y border-gray-400 bg-gray-50 text-xs uppercase tracking-wide text-gray-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
+          <th class="<%= th %>" data-action="click->sortable-table#sort" data-col="0" data-sort-type="string">Deck<span data-arrow></span></th>
+          <th class="<%= th %> text-right" data-action="click->sortable-table#sort" data-col="1" data-sort-type="number">Words<span data-arrow></span></th>
+          <th class="<%= th %>" data-action="click->sortable-table#sort" data-col="2" data-sort-type="number">Added<span data-arrow></span></th>
+          <th class="px-3 py-2 text-right font-semibold whitespace-nowrap">Drill</th>
+        </tr>
+      </thead>
+      <tbody data-sortable-table-target="body">
+        <% ready_decks.each do |deck| %>
           <% unit = deck.terms.exists?(kind: "sentence") ? "sentence" : "word" %>
-          <p class="text-xs text-gray-500 dark:text-gray-400"><%= pluralize(deck.terms.size, unit) %><%= " · #{deck.topic}" if deck.topic.present? %></p>
-        </div>
-        <div class="flex flex-wrap items-center justify-end gap-2 text-xs">
-          <%= link_to "#{source.upcase} → #{target.upcase}", play_path(deck: deck.slug, from: source, to: target),
-                class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
-          <%= link_to "#{target.upcase} → #{source.upcase}", play_path(deck: deck.slug, from: target, to: source),
-                class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
-          <% if current_user.multi_language_drill? %>
-            <%= link_to "#{source.upcase} → all #{learning.size}", play_path(deck: deck.slug, from: source, multi: "1"),
-                  class: "rounded-md border border-gray-900 bg-gray-900 px-2.5 py-1 text-white hover:bg-gray-700 dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white" %>
-          <% end %>
-        </div>
-      </li>
-    <% end %>
-  </ul>
+          <tr class="border-b border-gray-200 odd:bg-white even:bg-gray-50 dark:border-gray-800 dark:odd:bg-gray-900 dark:even:bg-gray-800/40">
+            <td class="max-w-[20rem] px-3 py-1.5">
+              <%= link_to deck.name, play_path(deck: deck.slug, from: target, to: source),
+                    class: "block truncate font-medium hover:underline", title: ([deck.name, deck.topic.presence].compact.join(" · ")) %>
+            </td>
+            <td class="px-3 py-1.5 text-right tabular-nums text-gray-600 dark:text-gray-400"><%= deck.terms.size %></td>
+            <td class="px-3 py-1.5 whitespace-nowrap text-gray-500 dark:text-gray-400" data-sort-value="<%= deck.created_at.to_i %>" title="<%= deck.created_at.strftime("%-d %b %Y, %H:%M") %>"><%= deck.created_at.strftime("%-d %b %y") %></td>
+            <td class="px-3 py-1.5">
+              <div class="flex items-center justify-end gap-1.5 text-xs">
+                <%= link_to "#{target.upcase}→#{source.upcase}", play_path(deck: deck.slug, from: target, to: source),
+                      class: "rounded-md border border-gray-300 px-2 py-0.5 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
+                <%= link_to "#{source.upcase}→#{target.upcase}", play_path(deck: deck.slug, from: source, to: target),
+                      class: "rounded-md border border-gray-300 px-2 py-0.5 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
+                <% if current_user.multi_language_drill? %>
+                  <%= link_to "→all #{learning.size}", play_path(deck: deck.slug, from: source, multi: "1"),
+                        class: "rounded-md border border-gray-900 bg-gray-900 px-2 py-0.5 text-white hover:bg-gray-700 dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white" %>
+                <% end %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
 <% end %>

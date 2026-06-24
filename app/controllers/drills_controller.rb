@@ -3,6 +3,8 @@ class DrillsController < ApplicationController
     @decks       = current_user.decks.includes(:terms).order(:position)
     @miss_counts = current_user.attempts.miss_counts(langs: current_user.drillable_languages)
     @word_count  = current_user.terms.drillable.where(kind: "word").count
+    basics_ids   = @decks.select { |d| d.name.start_with?("Basics:") }.map(&:id)
+    @basics_count = basics_ids.any? ? current_user.terms.drillable.where(deck_id: basics_ids).count : 0
   end
 
   def play
@@ -217,6 +219,16 @@ class DrillsController < ApplicationController
       @title     = "All words"
       @deck_slug = "all"
       current_user.terms.drillable.where(kind: "word").order(:deck_id, :position)
+    when "basics"
+      # Virtual aggregate over every "Basics: *" deck — one drill across the whole
+      # foundation (pronouns, verbs, numbers, …) without duplicating terms, so FSRS
+      # progress is shared with the individual themed decks. Verbs are kind "phrase",
+      # so include phrases here (unlike "all", which is words-only).
+      @title     = "Basics: All"
+      @deck_slug = "basics"
+      basics_ids = current_user.decks.where("name LIKE 'Basics:%'").pluck(:id)
+      current_user.terms.drillable.where(deck_id: basics_ids)
+                  .where.not(kind: "sentence").order(:deck_id, :position)
     else
       @deck            = current_user.decks.find_by!(slug: deck_param)
       @title           = @deck.name
