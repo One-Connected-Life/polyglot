@@ -9,14 +9,16 @@ class DecksController < ApplicationController
       return
     end
 
-    topic = params.require(:deck).permit(:topic)[:topic].to_s.strip
+    attrs = params.require(:deck).permit(:topic, :label)
+    topic = attrs[:topic].to_s.strip
     if topic.blank?
       redirect_to new_deck_path, alert: "Tell me a topic to build a deck from."
       return
     end
 
+    label = attrs[:label].to_s.strip
     deck = current_user.decks.create!(
-      name: topic.titleize,
+      name: label.presence || topic.titleize,
       topic: topic,
       status: "pending",
       position: (current_user.decks.maximum(:position) || -1) + 1

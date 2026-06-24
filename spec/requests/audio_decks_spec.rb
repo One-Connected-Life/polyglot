@@ -46,10 +46,16 @@ RSpec.describe "Audio decks", type: :request do
     expect(response).to redirect_to(new_audio_deck_path)
   end
 
-  it "suffixes the deck name when the slug already exists" do
+  it "suffixes the slug (not the visible name) when the slug already exists" do
     create(:deck, user: user, name: "Voicemail", slug: "voicemail", status: "ready")
     post audio_decks_path, params: { audio: upload(filename: "Voicemail.m4a") }
-    expect(user.decks.last.name).to eq("Voicemail 2")
+    expect(user.decks.last.name).to eq("Voicemail")
+    expect(user.decks.last.slug).to eq("voicemail-2")
+  end
+
+  it "uses an explicit label as the deck name when given" do
+    post audio_decks_path, params: { audio: upload(filename: "Voicemail.m4a"), label: "Mum's GP call" }
+    expect(user.decks.last.name).to eq("Mum's GP call")
   end
 
   it "blocks upload once the generation cap is reached" do

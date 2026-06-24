@@ -13,6 +13,11 @@
       <%= f.text_field :topic, autofocus: true, required: true,
             placeholder: "e.g. cooking, the doctor's office, cycling", class: "mt-1 #{field_classes}" %>
     </div>
+    <div>
+      <%= f.label :label, "Label (optional)", class: "block text-xs font-medium text-gray-600 dark:text-gray-300" %>
+      <%= f.text_field :label,
+            placeholder: "what to call this deck — defaults to the topic", class: "mt-1 #{field_classes}" %>
+    </div>
     <%= f.submit "Generate deck", class: primary_button_classes %>
   <% end %>
 

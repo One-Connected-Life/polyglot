@@ -18,6 +18,12 @@
                     file:text-sm file:font-medium file:text-white hover:file:bg-gray-800
                     dark:file:bg-gray-100 dark:file:text-gray-900 dark:hover:file:bg-white" />
     </div>
+    <div>
+      <label for="label" class="block text-xs font-medium text-gray-600 dark:text-gray-300">Label (optional)</label>
+      <input type="text" name="label" id="label"
+             placeholder="what to call this deck — defaults to the filename"
+             class="mt-1 <%= field_classes %>" />
+    </div>
     <button type="submit" class="<%= primary_button_classes %>">Transcribe &amp; extract</button>
   <% end %>
 

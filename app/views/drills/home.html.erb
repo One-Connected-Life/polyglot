@@ -38,7 +38,7 @@
 
 <% reviewable.each do |deck| %>
   <div class="mb-4 flex items-center justify-between gap-4 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200">
-    <span>✨ “<%= deck.name %>” is ready — <%= pluralize(deck.terms.size, "word") %> pulled from your audio.</span>
+    <span>✨ “<%= deck.name %>” is ready to review — <%= pluralize(deck.terms.size, "word") %>.</span>
     <%= link_to "Review →", review_deck_path(deck),
           class: "shrink-0 rounded-md border border-emerald-400 px-2.5 py-1 font-medium hover:bg-emerald-100 dark:border-emerald-700 dark:hover:bg-emerald-900/40" %>
   </div>

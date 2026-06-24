@@ -30,8 +30,10 @@ class AudioDecksController < ApplicationController
     end
 
     path = stage(file, ext)
+    label = params[:label].to_s.strip
+    filename = File.basename(file.original_filename.to_s, ".*").presence || "Audio deck"
     deck = current_user.decks.create!(
-      name: unique_name(File.basename(file.original_filename.to_s, ".*").presence || "Audio deck"),
+      name: label.presence || filename.titleize,
       status: "transcribing",
       position: (current_user.decks.maximum(:position) || -1) + 1
     )
@@ -50,15 +52,5 @@ class AudioDecksController < ApplicationController
     path = dir.join("#{SecureRandom.uuid}#{ext}")
     File.binwrite(path, file.read)
     path
-  end
-
-  # Deck slug is unique per user; filenames repeat, so suffix on collision.
-  def unique_name(base)
-    base = base.titleize
-    return base unless current_user.decks.exists?(slug: base.parameterize)
-
-    n = 2
-    n += 1 while current_user.decks.exists?(slug: "#{base} #{n}".parameterize)
-    "#{base} #{n}"
   end
 end

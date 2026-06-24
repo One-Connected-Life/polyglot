@@ -5,8 +5,11 @@
 <div class="mx-auto max-w-lg">
   <%= link_to "← decks", root_path, class: "text-xs text-gray-500 hover:underline dark:text-gray-400" %>
   <h1 class="mt-1 text-2xl font-semibold tracking-tight">Review “<%= @deck.name %>”</h1>
-  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-    From your audio. Uncheck anything you don't want, fix a translation if needed, then save —
+  <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+    <%= pluralize(@deck.terms.size, "word") %> · imported <%= @deck.created_at.strftime("%b %-d, %Y at %-l:%M %p") %>
+  </p>
+  <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+    Uncheck anything you don't want, fix a translation if needed, then save —
     the rest becomes a drillable deck.
   </p>
 
