@@ -20,9 +20,11 @@
 
     <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
 
-    <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16">
+    <link rel="icon" href="/icon.png" type="image/png" sizes="512x512">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
@@ -35,12 +37,18 @@
       dvh height so there's no overflow scroll. %>
   <body class="min-h-dvh bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100 antialiased pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
     <% if current_user %>
-      <nav class="border-b border-gray-200 dark:border-gray-800">
-        <div class="mx-auto flex max-w-2xl items-center justify-between px-5 py-2 text-xs text-gray-500 dark:text-gray-400">
-          <%= link_to "Drill", root_path, class: "font-medium hover:underline" %>
-          <div class="flex items-center gap-4">
-            <%= link_to "Your words", stats_path, class: "hover:underline" %>
-            <%= button_to "Sign out", session_path, method: :delete, class: "hover:underline" %>
+      <nav class="border-b border-gray-200 bg-white/70 backdrop-blur dark:border-gray-800 dark:bg-gray-950/70">
+        <div class="mx-auto flex max-w-2xl items-center justify-between px-5 py-2.5">
+          <%= link_to root_path, class: "flex items-center gap-2 group", "aria-label": "Polyglot — drill" do %>
+            <%= image_tag "polyglot-mark.svg", alt: "", width: 24, height: 24,
+                  class: "h-6 w-6 rounded-md shadow-sm transition group-hover:scale-105" %>
+            <span class="text-base font-semibold tracking-tight text-brand-indigo dark:text-brand-paper">
+              Poly<span class="text-brand-coral">glot</span>
+            </span>
+          <% end %>
+          <div class="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+            <%= link_to "Your words", stats_path, class: "hover:text-brand-indigo hover:underline dark:hover:text-brand-paper" %>
+            <%= button_to "Sign out", session_path, method: :delete, class: "hover:text-brand-indigo hover:underline dark:hover:text-brand-paper" %>
           </div>
         </div>
       </nav>

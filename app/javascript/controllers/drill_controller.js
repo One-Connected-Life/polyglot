@@ -600,6 +600,14 @@ export default class extends Controller {
     }).length
     const graded = this.results.filter((r) => r.graded).length
     this.scoreTarget.textContent = graded ? `${correct}/${graded}` : ""
+    // Brand the score: coral when on a clean streak (all-correct so far), indigo otherwise.
+    // A small warm "you've got it" beat without repainting the calm card. (BRANDING accent)
+    const onStreak = graded > 0 && correct === graded
+    this.scoreTarget.className = graded
+      ? (onStreak
+          ? "font-semibold text-brand-coral"
+          : "font-medium text-brand-indigo dark:text-brand-sky")
+      : ""
   }
 
   showDifficulty(level) {

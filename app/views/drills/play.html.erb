@@ -103,7 +103,7 @@
       <span data-drill-target="score"></span>
     </div>
     <div class="h-1 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
-      <div data-drill-target="bar" class="h-full bg-gray-900 transition-all duration-200 dark:bg-gray-100" style="width:0%"></div>
+      <div data-drill-target="bar" class="h-full bg-brand-indigo transition-all duration-200 dark:bg-brand-sky" style="width:0%"></div>
     </div>
 
     <% if @multi %>
@@ -145,7 +145,7 @@
             <input data-drill-target="multiInput"
                    type="text"
                    autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
-                   class="mt-2 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-center text-lg outline-none focus:border-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-gray-300">
+                   class="mt-2 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-center text-lg outline-none focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-brand-sky dark:focus:ring-brand-sky/20">
           </div>
 
           <%# upcoming — faint reminder of remaining languages %>
@@ -168,12 +168,12 @@
             </button>
             <button type="button" data-drill-target="multiCheck" data-action="drill#grade"
                     aria-label="Check answer"
-                    class="min-w-[12rem] rounded-2xl bg-gray-900 px-8 py-5 text-center text-lg font-semibold text-white shadow-sm transition active:scale-95 hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+                    class="min-w-[12rem] rounded-2xl bg-brand-indigo px-8 py-5 text-center text-lg font-semibold text-white shadow-sm transition active:scale-95 hover:bg-brand-indigo/90 dark:bg-brand-indigo dark:text-white dark:hover:bg-brand-indigo/80">
               Check ✓
             </button>
             <button type="button" data-drill-target="multiNext" data-action="drill#next"
                     aria-label="Next concept"
-                    class="hidden min-w-[12rem] rounded-2xl bg-gray-900 px-8 py-5 text-center text-lg font-semibold text-white shadow-sm transition active:scale-95 hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+                    class="hidden min-w-[12rem] rounded-2xl bg-brand-indigo px-8 py-5 text-center text-lg font-semibold text-white shadow-sm transition active:scale-95 hover:bg-brand-indigo/90 dark:bg-brand-indigo dark:text-white dark:hover:bg-brand-indigo/80">
               Next concept →
             </button>
           </div>
@@ -205,7 +205,7 @@
         <input data-drill-target="input" type="text"
                autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
                placeholder="<%= Translation::LANGUAGES[@to].downcase %>…"
-               class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-xl outline-none focus:border-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-gray-300">
+               class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-xl outline-none focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-brand-sky dark:focus:ring-brand-sky/20">
 
         <div class="mt-4 min-h-[4.5rem] text-center">
           <span data-drill-target="feedback" class="text-sm"></span>
@@ -239,12 +239,12 @@
           </button>
           <button type="button" data-drill-target="checkBtn" data-action="drill#grade"
                   aria-label="Check answer"
-                  class="hidden min-w-[12rem] rounded-2xl bg-gray-900 px-8 py-5 text-center text-lg font-semibold text-white shadow-sm transition active:scale-95 hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+                  class="hidden min-w-[12rem] rounded-2xl bg-brand-indigo px-8 py-5 text-center text-lg font-semibold text-white shadow-sm transition active:scale-95 hover:bg-brand-indigo/90 dark:bg-brand-indigo dark:text-white dark:hover:bg-brand-indigo/80">
             Check <span class="ml-2 align-middle">✓</span>
           </button>
           <button type="button" data-drill-target="nextBtn" data-action="drill#next"
                   aria-label="Next word"
-                  class="hidden min-w-[12rem] rounded-2xl bg-gray-900 px-8 py-5 text-center text-lg font-semibold text-white shadow-sm transition active:scale-95 hover:bg-gray-700 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white">
+                  class="hidden min-w-[12rem] rounded-2xl bg-brand-indigo px-8 py-5 text-center text-lg font-semibold text-white shadow-sm transition active:scale-95 hover:bg-brand-indigo/90 dark:bg-brand-indigo dark:text-white dark:hover:bg-brand-indigo/80">
             Next word <span class="ml-2 align-middle text-3xl leading-none">→</span>
           </button>
         </div>

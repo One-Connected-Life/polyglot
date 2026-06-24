@@ -77,7 +77,7 @@
     </p>
     <div class="mt-5 flex flex-wrap items-center justify-center gap-2">
       <%= link_to "Create your first deck", new_deck_path,
-            class: "inline-block rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white" %>
+            class: "inline-block rounded-lg bg-brand-indigo px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-indigo/90" %>
       <%= link_to "Upload audio", new_audio_deck_path,
             class: "inline-block rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
     </div>
@@ -112,7 +112,7 @@
       <%# Multi-language entry point: only shown when the user has 2+ learning languages %>
       <% if current_user.multi_language_drill? %>
         <%= link_to "#{source.upcase} → all #{learning.size}", play_path(deck: "all", from: source, multi: "1"),
-              class: "rounded-md border border-gray-900 bg-gray-900 px-2.5 py-1 text-white hover:bg-gray-700 dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white" %>
+              class: "rounded-md border border-brand-coral bg-brand-coral px-2.5 py-1 font-medium text-white shadow-sm hover:bg-brand-coral/90" %>
       <% end %>
     </div>
   </div>
@@ -131,7 +131,7 @@
               class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
         <% if current_user.multi_language_drill? %>
           <%= link_to "#{source.upcase} → all #{learning.size}", play_path(deck: "basics", from: source, multi: "1"),
-                class: "rounded-md border border-gray-900 bg-gray-900 px-2.5 py-1 text-white hover:bg-gray-700 dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white" %>
+                class: "rounded-md border border-brand-coral bg-brand-coral px-2.5 py-1 font-medium text-white shadow-sm hover:bg-brand-coral/90" %>
         <% end %>
       </div>
     </div>
@@ -181,7 +181,7 @@
                       class: "rounded-md border border-gray-300 px-2 py-0.5 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
                 <% if current_user.multi_language_drill? %>
                   <%= link_to "→all #{learning.size}", play_path(deck: deck.slug, from: source, multi: "1"),
-                        class: "rounded-md border border-gray-900 bg-gray-900 px-2 py-0.5 text-white hover:bg-gray-700 dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white" %>
+                        class: "rounded-md border border-brand-coral bg-brand-coral px-2 py-0.5 font-medium text-white hover:bg-brand-coral/90" %>
                 <% end %>
               </div>
             </td>

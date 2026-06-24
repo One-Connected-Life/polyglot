@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="Polyglot">
-  <!-- Web favicon: rounded-square indigo field, light strands so the Weave reads at
-       tab size. Same recolor as the app icon (paper / sky / coral on indigo). -->
+  <!-- Header mark: rounded-square indigo tile, light strands. Self-contained tile so it
+       reads on either a light or dark nav bar. -->
   <defs>
-    <clipPath id="field"><rect x="0" y="0" width="1024" height="1024" rx="228" ry="228"/></clipPath>
+    <clipPath id="hfield"><rect x="0" y="0" width="1024" height="1024" rx="228" ry="228"/></clipPath>
   </defs>
-  <g clip-path="url(#field)">
+  <g clip-path="url(#hfield)">
     <rect x="0" y="0" width="1024" height="1024" fill="#2D2A6E"/>
     <g fill="none" stroke-width="78" stroke-linecap="round">
       <path d="M512 250 C 300 330, 300 430, 512 512 C 724 594, 724 694, 512 774" stroke="#FBF7F0"/>
