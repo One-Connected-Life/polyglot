@@ -6,7 +6,7 @@
   <%= link_to "← decks", root_path, class: "text-xs text-gray-500 hover:underline dark:text-gray-400" %>
   <h1 class="mt-1 text-2xl font-semibold tracking-tight">Review “<%= @deck.name %>”</h1>
   <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
-    <%= pluralize(@deck.terms.size, "word") %> · imported <%= @deck.created_at.strftime("%b %-d, %Y at %-l:%M %p") %>
+    <%= pluralize(@terms.size, "word") %> to review · imported <%= @deck.created_at.strftime("%b %-d, %Y at %-l:%M %p") %>
   </p>
   <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
     Uncheck anything you don't want, fix a translation if needed, then save —
@@ -14,7 +14,7 @@
   </p>
 
   <%= form_with url: review_deck_path(@deck), method: :patch, class: "mt-6 space-y-2" do %>
-    <% @deck.terms.each do |term| %>
+    <% @terms.each do |term| %>
       <% tgt = term.translation(target); src = term.translation(source) %>
       <label class="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3
                     has-[:checked]:border-gray-400 dark:border-gray-800 dark:bg-gray-900

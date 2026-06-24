@@ -15,20 +15,25 @@ class DeckGenerator
   # (audio→vocab, issue #3) instead of generating fresh words from deck.topic.
   # final_status: the status the deck lands in once words are persisted — "ready" for
   # topic decks (drillable immediately), "review" for audio decks (user prunes first).
-  def initialize(deck, transcript: nil, final_status: "ready")
+  # append: add a fresh cohort to an already-drillable deck. New words come in
+  # reviewed: false (await review) and the deck's status is left untouched.
+  def initialize(deck, transcript: nil, final_status: "ready", append: false)
     @deck = deck
     @user = deck.user
     @transcript = transcript.to_s.strip.presence
     @final_status = final_status
+    @append = append
   end
 
   def call
     words = fetch_words
     raise Error, "model returned no usable words" if words.blank?
     persist(words)
-    @deck.update!(status: @final_status)
+    # Append leaves the deck "ready" (still drillable); only a fresh build flips status.
+    @deck.update!(status: @final_status) unless @append
   rescue StandardError => e
-    @deck.update!(status: "failed")
+    # Don't mark an existing, working deck "failed" just because an append errored.
+    @deck.update!(status: "failed") unless @append
     Rails.logger.error("[DeckGenerator] deck=#{@deck.id} #{e.class}: #{e.message}")
     raise
   end
@@ -68,9 +73,16 @@ class DeckGenerator
         \"\"\"
       TASK
     else
+      avoid = existing_target_words
+      avoid_clause = if @append && avoid.any?
+        "\nThe learner ALREADY has these words for this topic — generate DIFFERENT, " \
+        "additional ones and do NOT repeat any of them:\n#{avoid.join(", ")}"
+      else
+        ""
+      end
       <<~TASK
         Generate #{COUNT} common, useful #{target} words or short phrases for the topic
-        "#{@deck.topic}", for a learner whose base language is #{source}.
+        "#{@deck.topic}", for a learner whose base language is #{source}.#{avoid_clause}
       TASK
     end
 
@@ -143,11 +155,21 @@ class DeckGenerator
     text.sub(pattern, "")
   end
 
+  # Target-language words already on the deck — used to tell the model what NOT to
+  # repeat when appending a fresh cohort to an existing topic deck.
+  def existing_target_words
+    target = @user.target_language
+    @deck.terms.flat_map(&:translations)
+         .select { |tr| tr.language == target }
+         .filter_map { |tr| tr.text.presence }
+  end
+
   def persist(words)
     target = @user.target_language
     source = @user.source_language
-    seen = Set.new
-    position = 0
+    # Skip words already on the deck (matters for append) plus dupes within this batch.
+    seen = existing_target_words.map(&:downcase).to_set
+    position = @deck.terms.maximum(:position) || 0
 
     Term.transaction do
       words.each do |w|
@@ -162,7 +184,9 @@ class DeckGenerator
 
         phonetics_json = build_phonetics_json(w, target)
 
-        term = @deck.terms.create!(kind: "word", position: (position += 1))
+        # Append → reviewed: false (awaits the user). Fresh build → reviewed (deck
+        # status gates it instead), so it drills immediately once the deck is accepted.
+        term = @deck.terms.create!(kind: "word", position: (position += 1), reviewed: !@append)
         term.translations.create!(
           language: target, text: t, article: article,
           etymology: w["etymology"].presence, mnemonic: w["mnemonic"].presence,

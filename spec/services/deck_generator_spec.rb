@@ -59,4 +59,37 @@ RSpec.describe DeckGenerator do
     expect { DeckGenerator.new(deck).call }.to raise_error(DeckGenerator::Error)
     expect(deck.reload.status).to eq("failed")
   end
+
+  it "appends a cohort as unreviewed, continuing positions and skipping existing words" do
+    user = create(:user, target_language: "fr", source_language: "en")
+    deck = create(:deck, user: user, topic: "tech", status: "ready")
+    existing = create(:term, deck: deck, position: 1, reviewed: true)
+    create(:translation, term: existing, language: "fr", text: "ordinateur")
+    create(:translation, term: existing, language: "en", text: "computer")
+
+    allow_any_instance_of(DeckGenerator).to receive(:post_message).and_return(canned([
+      { "target" => "ordinateur", "source" => "computer" }, # already on the deck → skipped
+      { "target" => "clavier", "article" => "le", "source" => "keyboard" }
+    ]))
+
+    DeckGenerator.new(deck, append: true).call
+    deck.reload
+
+    expect(deck.status).to eq("ready")          # append never changes status
+    expect(deck.terms.count).to eq(2)           # one new word; the duplicate was skipped
+
+    new_term = deck.terms.order(:position).last
+    expect(new_term.translation("fr").text).to eq("clavier")
+    expect(new_term.position).to eq(2)          # continued from the existing max
+    expect(new_term.reviewed).to be(false)      # awaits review
+    expect(user.terms.drillable.count).to eq(1) # only the already-reviewed word drills
+  end
+
+  it "leaves an existing deck 'ready' when an append errors" do
+    deck = create(:deck, status: "ready", topic: "tech")
+    allow_any_instance_of(DeckGenerator).to receive(:post_message).and_raise(DeckGenerator::Error, "boom")
+
+    expect { DeckGenerator.new(deck, append: true).call }.to raise_error(DeckGenerator::Error)
+    expect(deck.reload.status).to eq("ready")   # not flipped to "failed"
+  end
 end

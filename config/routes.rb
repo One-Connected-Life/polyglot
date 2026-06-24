@@ -40,6 +40,7 @@ Rails.application.routes.draw do
     member do
       get   :review
       patch :review, action: :update_review
+      post  :expand   # generate an additional cohort of words for an existing topic deck
     end
   end
 

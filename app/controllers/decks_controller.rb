@@ -35,24 +35,51 @@ class DecksController < ApplicationController
     redirect_to root_path, notice: "Deck removed."
   end
 
-  # Prune/edit the candidate words extracted from an uploaded audio file (issue #3).
-  def review
-    @deck = current_user.decks.find_by!(slug: params[:id])
-    redirect_to root_path, alert: "Nothing to review for that deck." unless @deck.status == "review"
+  # Generate an additional cohort of words for an existing topic deck. Runs in the
+  # background; new words land reviewed: false and surface in the review screen.
+  def expand
+    deck = current_user.decks.find_by!(slug: params[:id])
+
+    unless current_user.can_generate?
+      return redirect_to root_path,
+        alert: "You've reached your deck-generation limit (#{User::GENERATION_CAP})."
+    end
+    if deck.topic.blank?
+      return redirect_to root_path,
+        alert: "“#{deck.name}” wasn't built from a topic, so I can't auto-add more words to it."
+    end
+    if deck.expanding?
+      return redirect_to root_path, notice: "Already adding words to “#{deck.name}” — hang tight."
+    end
+
+    deck.update!(expanding: true)
+    current_user.increment!(:generations_count)
+    ExpandDeckJob.perform_later(deck)
+    redirect_to root_path, notice: "Adding more “#{deck.name}” words — they'll appear to review shortly."
   end
 
-  # Apply the review: drop unchecked words, save any edits, promote to drillable.
+  # Prune/edit the candidate words awaiting review — a brand-new deck's whole word
+  # list, or a fresh cohort appended to a drillable deck (issue #3 / add-more).
+  def review
+    @deck  = current_user.decks.find_by!(slug: params[:id])
+    @terms = @deck.pending_review_terms.includes(:translations)
+    redirect_to root_path, alert: "Nothing to review for that deck." unless @deck.needs_review?
+  end
+
+  # Apply the review: drop unchecked words, save edits, mark the rest reviewed
+  # (drillable). Only touches the cohort under review — never already-drilling words.
   def update_review
     deck   = current_user.decks.find_by!(slug: params[:id])
     target = current_user.target_language
     source = current_user.source_language
     keep   = Array(params[:keep]).map(&:to_i).to_set
 
-    deck.terms.includes(:translations).find_each do |term|
+    deck.pending_review_terms.includes(:translations).find_each do |term|
       unless keep.include?(term.id)
         term.destroy
         next
       end
+      term.update!(reviewed: true)
       edits = params.dig(:terms, term.id.to_s)
       next if edits.blank?
 

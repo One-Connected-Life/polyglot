@@ -74,4 +74,34 @@ RSpec.describe "Deck review", type: :request do
     get review_deck_path(deck)
     expect(response).to redirect_to(root_path)
   end
+
+  context "reviewing a fresh cohort appended to an already-drillable deck" do
+    let(:deck) { create(:deck, user: user, name: "Technical", topic: "technical", status: "ready") }
+
+    def reviewed_word(nl, en)
+      candidate(nl, en).tap { |t| t.update!(reviewed: true) }
+    end
+
+    def appended_word(nl, en)
+      candidate(nl, en).tap { |t| t.update!(reviewed: false) }
+    end
+
+    it "reviews only the new cohort and leaves existing drilling words untouched" do
+      old  = reviewed_word("computer", "computer")
+      keep = appended_word("toetsenbord", "keyboard")
+      drop = appended_word("ruis", "(noise)")
+
+      # Drill pool sees only the already-reviewed word while the cohort is pending.
+      expect(user.terms.drillable.pluck(:id)).to eq([old.id])
+
+      patch review_deck_path(deck), params: { keep: [keep.id.to_s] }
+
+      expect(deck.reload.status).to eq("ready")
+      expect(Term.exists?(old.id)).to be(true)   # never offered for deletion
+      expect(Term.exists?(keep.id)).to be(true)
+      expect(Term.exists?(drop.id)).to be(false)
+      expect(keep.reload.reviewed).to be(true)
+      expect(user.terms.drillable.pluck(:id)).to match_array([old.id, keep.id])
+    end
+  end
 end

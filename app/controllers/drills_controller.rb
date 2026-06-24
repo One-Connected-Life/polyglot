@@ -255,7 +255,8 @@ class DrillsController < ApplicationController
       @title           = @deck.name
       @deck_slug       = @deck.slug
       @is_sentence_deck = @deck.terms.exists?(kind: "sentence")
-      @deck.terms
+      # Exclude a not-yet-accepted appended cohort (reviewed: false) from the deck drill.
+      @deck.terms.where(reviewed: true)
     end
   end
 

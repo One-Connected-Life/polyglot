@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_24_105532) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_24_140000) do
   create_table "attempts", force: :cascade do |t|
     t.boolean "correct", default: false, null: false
     t.datetime "created_at", null: false
@@ -27,6 +27,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_24_105532) do
 
   create_table "decks", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.boolean "expanding", default: false, null: false
     t.string "name", null: false
     t.integer "position", default: 0, null: false
     t.string "slug", null: false
@@ -80,6 +81,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_24_105532) do
     t.string "key"
     t.string "kind", default: "word", null: false
     t.integer "position", default: 0, null: false
+    t.boolean "reviewed", default: true, null: false
     t.datetime "updated_at", null: false
     t.index ["deck_id", "key"], name: "index_terms_on_deck_id_and_key", unique: true, where: "key IS NOT NULL"
     t.index ["deck_id"], name: "index_terms_on_deck_id"

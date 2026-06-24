@@ -8,7 +8,9 @@ class Term < ApplicationRecord
 
   # Only terms from saved, drillable decks — excludes decks still transcribing or
   # awaiting review (issue #3), so un-reviewed audio words never enter practice/stats.
-  scope :drillable, -> { joins(:deck).where(decks: { status: "ready" }) }
+  # Also excludes individually-unreviewed words: a fresh cohort appended to an already
+  # "ready" deck (reviewed: false) waits here until the user accepts it.
+  scope :drillable, -> { joins(:deck).where(decks: { status: "ready" }).where(reviewed: true) }
 
   # Translation in a given language (string or symbol code), or nil.
   def translation(language)
