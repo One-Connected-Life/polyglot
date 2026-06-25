@@ -8,4 +8,10 @@ class DesignController < ApplicationController
   def tabs
     render layout: false
   end
+
+  # Navigable 5-tab tree prototype — feel the up/down navigation. Screen chosen
+  # by ?s= (tab) + ?sub= / ?w= (drill-down). Stub content; structure is the point.
+  def app
+    render layout: false
+  end
 end

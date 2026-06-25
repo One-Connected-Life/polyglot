@@ -1,6 +1,7 @@
 Rails.application.routes.draw do
   # Throwaway design preview — compare candidate iOS tab bars in the browser (no app build).
   get "design/tabs", to: "design#tabs"
+  get "design/app",  to: "design#app"   # navigable 5-tab tree prototype
 
   resource :session
   resource :registration, only: [:new, :create]
