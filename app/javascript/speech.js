@@ -35,9 +35,22 @@ export function speak(text, code, { onResult } = {}) {
       utterance.lang = LANG_TAGS[code] || code
     }
     utterance.rate = 0.9
-    synth.cancel()
-    synth.speak(utterance)
-    if (onResult) onResult({ hasVoice: !!voice, lang: LANG_TAGS[code] || code })
+
+    // WebKit (iOS WKWebView/Safari) clips short utterances when speak() is called
+    // immediately after cancel(): the cancel races the new utterance and chops it
+    // to a blip (e.g. "zij" — Finding C). Only cancel when something is actually
+    // playing, and give WebKit a beat to settle the cancel before speaking. When
+    // nothing is in flight (the common deliberate-tap case) we skip cancel entirely.
+    const emit = () => {
+      synth.speak(utterance)
+      if (onResult) onResult({ hasVoice: !!voice, lang: LANG_TAGS[code] || code })
+    }
+    if (synth.speaking || synth.pending) {
+      synth.cancel()
+      setTimeout(emit, 120)
+    } else {
+      emit()
+    }
   }
 
   // Voices load async; if not ready, wait for them (once).
