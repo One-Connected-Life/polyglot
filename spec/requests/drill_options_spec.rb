@@ -38,4 +38,34 @@ RSpec.describe "Drill options relocation (Finding A)", type: :request do
     expect { get play_path(skip_easy: "1") }
       .to change { user.reload.skip_easy? }.from(false).to(true)
   end
+
+  describe "default direction is a respected Settings preference (coordinator add)" do
+    it "defaults bare /play to the recall-first direction (target→source, NL→EN)" do
+      # New users default to recall_first = true (recognition, the easier path).
+      expect(user.drill_recall_first).to be(true)
+      get play_path
+      expect(response).to have_http_status(:ok)
+      # The drill header shows the resolved direction; NL→EN, not EN→NL.
+      expect(response.body).to include("Dutch → English")
+      expect(response.body).not_to include("English → Dutch")
+    end
+
+    it "respects a saved production preference (source→target, EN→NL)" do
+      user.update!(drill_recall_first: false)
+      get play_path
+      expect(response.body).to include("English → Dutch")
+    end
+
+    it "lets an explicit from/to override the saved default for that request" do
+      get play_path(from: "en", to: "nl")  # explicit EN→NL (swap), overrides recall-first
+      expect(response.body).to include("English → Dutch")
+    end
+
+    it "persists the direction pref through Settings" do
+      patch onboarding_path, params: {
+        user: { source_language: "en", learning_languages: ["", "nl"], drill_recall_first: "false" }
+      }
+      expect(user.reload.drill_recall_first).to be(false)
+    end
+  end
 end

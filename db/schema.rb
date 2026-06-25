@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_25_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_25_140000) do
   create_table "attempts", force: :cascade do |t|
     t.boolean "correct", default: false, null: false
     t.datetime "created_at", null: false
@@ -123,6 +123,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_130000) do
     t.datetime "created_at", null: false
     t.string "drill_direction", default: "forward"
     t.string "drill_order", default: "smart", null: false
+    t.boolean "drill_recall_first", default: true, null: false
     t.string "email_address", null: false
     t.integer "generations_count", default: 0, null: false
     t.boolean "hide_mastered", default: true, null: false

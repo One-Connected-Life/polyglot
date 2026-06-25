@@ -13,8 +13,10 @@ module Api
     # API is stateless — these come purely from query params each call.
     class DrillsController < BaseController
       def play
-        @from = surfaced_lang(params[:from], current_user.source_language)
-        @to   = surfaced_lang(params[:to], current_user.target_language)
+        # Explicit from/to wins; else the user's saved default direction. (coordinator add)
+        default_from, default_to = current_user.default_drill_direction
+        @from = surfaced_lang(params[:from], default_from)
+        @to   = surfaced_lang(params[:to], default_to)
 
         # Default to the user's saved pref (Finding A); explicit param still overrides.
         @skip_easy = params.key?(:skip_easy) ? params[:skip_easy] == "1" : current_user.skip_easy?

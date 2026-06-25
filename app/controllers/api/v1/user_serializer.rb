@@ -17,6 +17,7 @@ module Api
           learning_languages: user.active_learning_languages,
           drill_direction:    user.drill_direction,
           drill_order:        user.drill_order,
+          drill_recall_first: user.drill_recall_first?,
           skip_easy:          user.skip_easy?,
           hide_mastered:      user.hide_mastered?,
           autoplay_prompt:    user.autoplay_prompt?,

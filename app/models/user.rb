@@ -82,6 +82,18 @@ class User < ApplicationRecord
     [target_language, source_language].compact
   end
 
+  # The user's saved DEFAULT drill direction as [from, to] (Finding A + coordinator
+  # addition). recall-first (recognition, the default) shows the target word and
+  # asks for the source — e.g. NL→EN — the easier path. Production flips it.
+  # /play uses this when no explicit from/to override is supplied.
+  def default_drill_direction
+    if drill_recall_first
+      [target_language, source_language]   # recognition: target shown → recall source (NL→EN)
+    else
+      [source_language, target_language]   # production:  source shown → produce target (EN→NL)
+    end
+  end
+
   # The full list of languages this user is actively learning (multi-language drill).
   # Falls back to [target_language] if learning_languages is not yet set.
   def active_learning_languages

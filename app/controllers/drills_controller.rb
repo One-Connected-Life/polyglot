@@ -8,8 +8,13 @@ class DrillsController < ApplicationController
   end
 
   def play
-    @from = surfaced_lang(params[:from], current_user.source_language)
-    @to   = surfaced_lang(params[:to], current_user.target_language)
+    # Direction: an explicit from/to override (home links, ⇄ swap) wins for this
+    # request; otherwise fall back to the user's SAVED default direction (Settings).
+    # This makes the Settings preference durable and respected across sessions
+    # instead of resetting to a hard-coded source→target default. (coordinator add)
+    default_from, default_to = current_user.default_drill_direction
+    @from = surfaced_lang(params[:from], default_from)
+    @to   = surfaced_lang(params[:to], default_to)
 
     # Drill options live on the User now (edited in Settings / onboarding#show).
     # URL params still update the saved pref (back-compat with old deep links and

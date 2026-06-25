@@ -82,6 +82,30 @@
       <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Drill options</h2>
       <p class="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">How drills behave. Applies the next time you start one.</p>
 
+      <%# Default direction: recall-first (target→source, e.g. NL→EN, easier
+          recognition — the default) vs production (source→target, harder).
+          This is the durable preference /play respects when you start a drill;
+          the per-session ⇄ swap can still flip it for one session. %>
+      <% src = @user.source_language_name || (@user.source_language || "EN").upcase %>
+      <% tgt = @user.target_language_name || (@user.target_language || "").upcase %>
+      <% if @user.target_language.present? %>
+        <div class="mt-4">
+          <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">Default direction</label>
+          <div class="mt-1.5 inline-flex rounded-lg border border-gray-300 bg-gray-50 p-0.5 dark:border-gray-700 dark:bg-gray-950">
+            <% [["true", "#{tgt} → #{src}"], ["false", "#{src} → #{tgt}"]].each do |value, label| %>
+              <label class="cursor-pointer">
+                <%= f.radio_button :drill_recall_first, value, class: "sr-only" %>
+                <span class="block rounded-md px-3 py-1.5 text-sm transition-colors
+                             <%= @user.drill_recall_first?.to_s == value ? 'bg-white shadow-sm dark:bg-gray-700 text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400' %>">
+                  <%= label %>
+                </span>
+              </label>
+            <% end %>
+          </div>
+          <p class="mt-1 text-[11px] text-gray-400 dark:text-gray-500"><%= tgt %> → <%= src %> recalls the word you know (easier). Flip it to practice producing <%= tgt %>.</p>
+        </div>
+      <% end %>
+
       <%# Order: smart (FSRS) vs shuffle (random) %>
       <div class="mt-4">
         <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">Order</label>
