@@ -1,0 +1,12 @@
+<% color = active ? "text-brand-indigo dark:text-brand-paper" : "text-gray-400 dark:text-gray-500" %>
+<div class="flex flex-1 flex-col items-center justify-center gap-1 <%= color %>">
+  <% if accent %>
+    <div class="-mt-6 flex h-12 w-12 items-center justify-center rounded-full bg-brand-coral shadow-lg">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-6 w-6 text-white"><%== icon %></svg>
+    </div>
+    <span class="mt-0.5 text-[10px] font-medium tracking-tight"><%= label %></span>
+  <% else %>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-6 w-6"><%== icon %></svg>
+    <span class="text-[10px] font-medium tracking-tight"><%= label %></span>
+  <% end %>
+</div>

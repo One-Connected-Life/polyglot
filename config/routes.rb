@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  # Throwaway design preview — compare candidate iOS tab bars in the browser (no app build).
+  get "design/tabs", to: "design#tabs"
+
   resource :session
   resource :registration, only: [:new, :create]
   resources :passwords, param: :token

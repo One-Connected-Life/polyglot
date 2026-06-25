@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Tab bar options — Polyglot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+  </head>
+  <body class="min-h-screen bg-gray-100 text-gray-900 dark:bg-neutral-900 dark:text-gray-100">
+    <%
+      icons = {
+        practice: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M4 7l8-3 8 3-8 3-8-3zm0 5l8 3 8-3M4 17l8 3 8-3"/>',
+        words:    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M5 4.5A1.5 1.5 0 016.5 3H19v15.5H6.5A1.5 1.5 0 005 20zM5 18.5A1.5 1.5 0 016.5 17H19"/>',
+        settings: '<circle cx="12" cy="12" r="3" stroke-width="1.6"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M19 12a7 7 0 00-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 00-2-1.2l-.3-2.6H9.8l-.3 2.6a7 7 0 00-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 005 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1c.6.5 1.3.9 2 1.2l.3 2.6h4.4l.3-2.6c.7-.3 1.4-.7 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z"/>',
+        add:      '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14M5 12h14"/>',
+        audio:    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M5 10v4M9 6v12M12 9v6M15 5v14M19 10v4"/>',
+        deck:     '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M12 4l1.7 4.3 4.3.3-3.3 2.8 1 4.2-3.7-2.3-3.7 2.3 1-4.2L6 8.6l4.3-.3z"/>'
+      }
+    %>
+
+    <div class="mx-auto max-w-md space-y-10 px-4 py-8">
+      <header class="text-center">
+        <span class="text-lg font-semibold tracking-tight text-brand-indigo dark:text-brand-paper">Poly<span class="text-brand-coral">glot</span></span>
+        <h1 class="mt-2 text-xl font-semibold tracking-tight">Tab bar — pick a feel</h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Mockups only — no app build. Tell me which lands (or remix).</p>
+      </header>
+
+      <!-- Option A — clean 3 -->
+      <section>
+        <div class="mb-2 flex items-baseline justify-between">
+          <h2 class="text-sm font-semibold">Option A — clean 3</h2>
+          <span class="text-xs text-gray-400">+ lives on My Words</span>
+        </div>
+        <div class="rounded-[2.4rem] border border-gray-200 bg-gray-50 pt-10 dark:border-neutral-700 dark:bg-neutral-900">
+          <div class="mx-auto w-full max-w-[390px] rounded-b-[2.2rem] border-x border-b border-gray-200 bg-white/90 backdrop-blur dark:border-neutral-700 dark:bg-neutral-800/90">
+            <div class="flex items-stretch px-2 pb-6 pt-2">
+              <%= render "design/tab", key: :practice, label: "Practice", active: true,  accent: false, icon: icons[:practice] %>
+              <%= render "design/tab", key: :words,    label: "My Words", active: false, accent: false, icon: icons[:words] %>
+              <%= render "design/tab", key: :settings, label: "Settings", active: false, accent: false, icon: icons[:settings] %>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Option B — creation-forward -->
+      <section>
+        <div class="mb-2 flex items-baseline justify-between">
+          <h2 class="text-sm font-semibold">Option B — creation-forward</h2>
+          <span class="text-xs text-gray-400">center + opens "add words"</span>
+        </div>
+        <div class="rounded-[2.4rem] border border-gray-200 bg-gray-50 pt-10 dark:border-neutral-700 dark:bg-neutral-900">
+          <div class="mx-auto w-full max-w-[390px] rounded-b-[2.2rem] border-x border-b border-gray-200 bg-white/90 backdrop-blur dark:border-neutral-700 dark:bg-neutral-800/90">
+            <div class="flex items-stretch px-2 pb-6 pt-2">
+              <%= render "design/tab", key: :practice, label: "Practice", active: true,  accent: false, icon: icons[:practice] %>
+              <%= render "design/tab", key: :add,      label: "Add",      active: false, accent: true,  icon: icons[:add] %>
+              <%= render "design/tab", key: :words,    label: "My Words", active: false, accent: false, icon: icons[:words] %>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Option C — current 4 -->
+      <section>
+        <div class="mb-2 flex items-baseline justify-between">
+          <h2 class="text-sm font-semibold">Option C — current 4</h2>
+          <span class="text-xs text-gray-400">two of these are actions</span>
+        </div>
+        <div class="rounded-[2.4rem] border border-gray-200 bg-gray-50 pt-10 dark:border-neutral-700 dark:bg-neutral-900">
+          <div class="mx-auto w-full max-w-[390px] rounded-b-[2.2rem] border-x border-b border-gray-200 bg-white/90 backdrop-blur dark:border-neutral-700 dark:bg-neutral-800/90">
+            <div class="flex items-stretch px-1 pb-6 pt-2">
+              <%= render "design/tab", key: :practice, label: "Practice", active: true,  accent: false, icon: icons[:practice] %>
+              <%= render "design/tab", key: :words,    label: "My Words", active: false, accent: false, icon: icons[:words] %>
+              <%= render "design/tab", key: :deck,     label: "New Deck", active: false, accent: false, icon: icons[:deck] %>
+              <%= render "design/tab", key: :audio,    label: "Audio",    active: false, accent: false, icon: icons[:audio] %>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <p class="pt-2 text-center text-xs text-gray-400">First tab shown active (indigo). Preview page — deleted after we decide.</p>
+    </div>
+  </body>
+</html>
