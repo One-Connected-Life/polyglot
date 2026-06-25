@@ -70,9 +70,14 @@ Rails.application.routes.draw do
 
   root "drills#home"
 
-  # Translate-first home (issue #10): translate target-lang text → source, optionally
-  # capturing the words into the rolling "My Words" deck.
+  # Translate tab (nav rework): GET renders the standalone Translate page (Type/Photo
+  # toggle); POST translates the text → source and (on Save) appends to the "Translated"
+  # deck. Was issue #10's translate-first home; now a first-class tab.
+  get  "translate", to: "translate#new",    as: :new_translate
   post "translate", to: "translate#create", as: :translate
+
+  # Add tab (nav rework): a launcher hub linking to the deck-creation flows.
+  get "add", to: "pages#add", as: :add
 
   # The drill runner: ?deck=<slug|all|misses>&from=<lang>&to=<lang>
   get "play", to: "drills#play", as: :play

@@ -8,12 +8,20 @@
   </p>
 </header>
 
+<%# ── Segmented filter: All · Learning · Retired (nav rework) ── %>
+<div class="mb-6 inline-flex w-full rounded-lg border border-gray-200 bg-gray-100 p-0.5 dark:border-gray-700 dark:bg-gray-800">
+  <% %w[all learning retired].each do |f| %>
+    <%= link_to f.capitalize, stats_path(seg: f),
+          class: "flex-1 rounded-md px-3 py-1.5 text-center text-sm #{@filter == f ? 'bg-white font-medium text-brand-indigo shadow-sm dark:bg-gray-700 dark:text-brand-paper' : 'text-gray-500 dark:text-gray-400'}" %>
+  <% end %>
+</div>
+
 <% if @totals[:attempts].zero? %>
   <p class="text-sm text-gray-500 dark:text-gray-400">No attempts yet — drill a deck and they'll show up here.</p>
 <% else %>
 
   <%# ── Retired shelf (FSRS only) ──────────────────────────────────────── %>
-  <% if @fsrs_enabled && @retired_words.any? %>
+  <% if %w[all retired].include?(@filter) && @fsrs_enabled && @retired_words.any? %>
     <section class="mb-10" aria-label="Retired words">
       <div class="mb-2 flex items-baseline justify-between">
         <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">Retired</p>
@@ -46,7 +54,7 @@
   <% end %>
 
   <%# ── Approaching retirement (FSRS only) ─────────────────────────────── %>
-  <% if @fsrs_enabled && @approaching_words.any? %>
+  <% if %w[all learning].include?(@filter) && @fsrs_enabled && @approaching_words.any? %>
     <section class="mb-8" aria-label="Approaching retirement">
       <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Almost there</p>
       <ul class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -71,8 +79,19 @@
   <% end %>
 
   <%# ── Active words table ──────────────────────────────────────────────── %>
-  <%# Scroll the TABLE on narrow phones, not the whole page (which would drag the
-      header/nav sideways). -mx-5 px-5 lets it bleed to the screen edges. %>
+  <%# all → every active word; learning → only words not yet owned; retired → table hidden
+      (the retired shelf above is the whole answer). Scroll the TABLE on narrow phones,
+      not the whole page. -mx-5 px-5 lets it bleed to the screen edges. %>
+  <% table_words = @filter == "learning" ? @learning_words : @active_words %>
+  <% if @filter == "retired" %>
+    <% if !@fsrs_enabled || @retired_words.none? %>
+      <p class="text-sm text-gray-500 dark:text-gray-400">No retired words yet — master a word and it lands on the shelf here.</p>
+    <% end %>
+  <% elsif table_words.empty? %>
+    <p class="text-sm text-gray-500 dark:text-gray-400">
+      <%= @filter == "learning" ? "Nothing in progress right now." : "No words yet." %>
+    </p>
+  <% else %>
   <div class="overflow-x-auto -mx-5 px-5">
   <table class="w-full min-w-[28rem] text-sm">
     <thead>
@@ -85,7 +104,7 @@
       </tr>
     </thead>
     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-      <% @active_words.each do |term| %>
+      <% table_words.each do |term| %>
         <% t2s = @summary[[term.id, @target, @source]] %>
         <% s2t = @summary[[term.id, @source, @target]] %>
         <% status = word_status(term) %>
@@ -114,4 +133,5 @@
     </tbody>
   </table>
   </div>
+  <% end %>
 <% end %>

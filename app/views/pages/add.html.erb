@@ -1,0 +1,35 @@
+<% content_for :title, "Add" %>
+
+<header class="mb-6">
+  <h1 class="text-2xl font-semibold tracking-tight">Add words</h1>
+  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+    Build a new deck — pick a topic, or pull vocabulary out of a recording.
+  </p>
+</header>
+
+<ul class="divide-y divide-gray-100 overflow-hidden rounded-xl border border-gray-200 dark:divide-gray-800 dark:border-gray-800">
+  <%= link_to new_deck_path, class: "block px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-900" do %>
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="font-medium">✨&nbsp; Generate a deck</div>
+        <div class="text-sm text-gray-500 dark:text-gray-400">From a topic — AI builds a <%= current_user.target_language_name %> word list</div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-4 w-4 shrink-0 text-gray-300"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    </div>
+  <% end %>
+
+  <%= link_to new_audio_deck_path, class: "block px-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-900" do %>
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="font-medium">🎙️&nbsp; From audio</div>
+        <div class="text-sm text-gray-500 dark:text-gray-400">Upload a recording → auto-extract vocab</div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" class="h-4 w-4 shrink-0 text-gray-300"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    </div>
+  <% end %>
+</ul>
+
+<p class="mt-4 text-center text-xs text-gray-400 dark:text-gray-500">
+  Want to translate &amp; save individual words?
+  <%= link_to "Use Translate →", new_translate_path, class: "text-brand-indigo hover:underline dark:text-brand-paper" %>
+</p>

@@ -4,12 +4,12 @@
 <% non_latin = Translation::NON_LATIN.include?(current_user.target_language) %>
 
 <div>
-  <%= link_to "← translate something else", root_path,
+  <%= link_to "← translate something else", new_translate_path,
         class: "text-xs text-gray-500 hover:underline dark:text-gray-400" %>
 
   <% if @captured %>
     <div class="mt-3 flex items-center justify-between gap-4 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200">
-      <span>✨ Captured <%= pluralize(@words.size, "word") %> to <strong>My Words</strong>.</span>
+      <span>✨ Saved <%= pluralize(@words.size, "word") %> to <strong>Translated</strong>.</span>
       <%= link_to "Drill →", play_path(deck: @deck.slug, from: current_user.target_language, to: current_user.source_language),
             class: "shrink-0 rounded-md border border-emerald-400 px-2.5 py-1 font-medium hover:bg-emerald-100 dark:border-emerald-700 dark:hover:bg-emerald-900/40" %>
     </div>
@@ -51,7 +51,7 @@
       <%= form_with url: translate_path, method: :post, data: { turbo: false } do |f| %>
         <%= hidden_field_tag :text, @words.map { |w| [w["article"], w["target"]].compact.join(" ") }.join("\n") %>
         <%= hidden_field_tag :capture, "1" %>
-        <%= f.submit "Capture these to My Words",
+        <%= f.submit "Save these to Translated",
               class: "w-full rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white" %>
       <% end %>
     </div>

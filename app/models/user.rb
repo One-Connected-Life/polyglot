@@ -38,11 +38,26 @@ class User < ApplicationRecord
   # The single rolling deck that Translate captures melt into (issue #10).
   MY_WORDS_SLUG = "my-words"
 
+  # The single per-user deck that the Translate tab's Save action appends to
+  # (nav rework). Every saved translation lands here — for now it's the only
+  # Translate destination.
+  TRANSLATED_SLUG = "translated"
+
   # Find-or-create the user's "My Words" deck — always drillable (status "ready"),
   # not topic-based (no auto-expand), captured words append into it.
   def my_words_deck
     decks.find_or_create_by!(slug: MY_WORDS_SLUG) do |d|
       d.name     = "My Words"
+      d.status   = "ready"
+      d.position = (decks.maximum(:position) || -1) + 1
+    end
+  end
+
+  # Find-or-create the user's "Translated" deck — where the Translate tab's Save
+  # action appends saved translations. Always drillable (status "ready").
+  def translated_deck
+    decks.find_or_create_by!(slug: TRANSLATED_SLUG) do |d|
+      d.name     = "Translated"
       d.status   = "ready"
       d.position = (decks.maximum(:position) || -1) + 1
     end

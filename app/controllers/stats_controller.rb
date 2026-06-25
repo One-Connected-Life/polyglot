@@ -61,6 +61,13 @@ class StatsController < ApplicationController
       owned:    @active_words.count { |t| @summary[[t.id, @target, @source]][:correct] >= 2 },
       retired:  @retired_words.size,
     }
+
+    # ── My Words tab segmented filter: All · Learning · Retired (nav rework) ──
+    # "Learning" = active words not yet owned (still being practiced).
+    # "Retired"  = the mastered shelf (FSRS). Filter is presentation-only; the
+    # underlying collections above are unchanged.
+    @filter = %w[all learning retired].include?(params[:seg]) ? params[:seg] : "all"
+    @learning_words = @active_words.reject { |t| @summary[[t.id, @target, @source]][:correct] >= 2 }
   end
 
   helper_method :word_status
