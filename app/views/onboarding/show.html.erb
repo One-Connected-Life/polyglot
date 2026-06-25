@@ -140,19 +140,27 @@
           </span>
         </label>
 
-        <label class="flex cursor-pointer items-start gap-2.5">
-          <%= f.check_box :skip_easy, class: "mt-0.5 h-4 w-4 rounded accent-brand-indigo" %>
+        <%# skip_easy + hide_mastered are superseded by FSRS (auto-skips cognates,
+            retires mastered). When FSRS is live we grey them out + explain, rather
+            than show dead controls. include_hidden:false so a disabled box doesn't
+            clobber the stored value on save. %>
+        <label class="flex items-start gap-2.5 <%= fsrs_enabled? ? 'opacity-50' : 'cursor-pointer' %>">
+          <%= f.check_box :skip_easy, class: "mt-0.5 h-4 w-4 rounded accent-brand-indigo", disabled: fsrs_enabled?, include_hidden: !fsrs_enabled? %>
           <span class="text-sm">
             Hide easy cognates
-            <span class="block text-[11px] text-gray-400 dark:text-gray-500">Skip words that look almost identical in both languages.</span>
+            <span class="block text-[11px] text-gray-400 dark:text-gray-500">
+              <% if fsrs_enabled? %>Handled automatically — the spaced-repetition engine already skips easy cognates.<% else %>Skip words that look almost identical in both languages.<% end %>
+            </span>
           </span>
         </label>
 
-        <label class="flex cursor-pointer items-start gap-2.5">
-          <%= f.check_box :hide_mastered, class: "mt-0.5 h-4 w-4 rounded accent-brand-indigo" %>
+        <label class="flex items-start gap-2.5 <%= fsrs_enabled? ? 'opacity-50' : 'cursor-pointer' %>">
+          <%= f.check_box :hide_mastered, class: "mt-0.5 h-4 w-4 rounded accent-brand-indigo", disabled: fsrs_enabled?, include_hidden: !fsrs_enabled? %>
           <span class="text-sm">
             Rest mastered words
-            <span class="block text-[11px] text-gray-400 dark:text-gray-500">Hide words you've recently mastered so they rest before returning.</span>
+            <span class="block text-[11px] text-gray-400 dark:text-gray-500">
+              <% if fsrs_enabled? %>Handled automatically — the spaced-repetition engine rests and retires mastered words.<% else %>Hide words you've recently mastered so they rest before returning.<% end %>
+            </span>
           </span>
         </label>
 

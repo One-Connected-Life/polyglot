@@ -18,6 +18,14 @@ module ApplicationHelper
     Translation::LANGUAGES.map { |code, name| [name, code] }
   end
 
+  # True when the FSRS scheduling path is live (FSRS_ENABLED=1). FSRS supersedes
+  # a couple of legacy drill toggles (skip_easy → auto-skips cognates; hide_mastered
+  # → retires mastered words), so Settings greys those out with an explanation
+  # rather than presenting dead controls. Mirrors DrillsController#fsrs_enabled?.
+  def fsrs_enabled?
+    ENV["FSRS_ENABLED"].to_s == "1"
+  end
+
   # True when the page is rendered inside the Hotwire Native WKWebView (App A).
   # Hotwire Native stamps "Hotwire Native" / "Turbo Native" into the WKWebView's
   # User-Agent. We key off it so OAuth buttons render as GET links the native

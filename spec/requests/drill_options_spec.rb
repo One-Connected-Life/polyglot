@@ -149,4 +149,28 @@ RSpec.describe "Drill options relocation (Finding A)", type: :request do
       expect(response.body).to include("perro")
     end
   end
+
+  describe "FSRS-superseded toggles are greyed out, not silently dead" do
+    it "leaves skip_easy/hide_mastered interactive when FSRS is off (legacy path)" do
+      get onboarding_path
+      expect(response.body).not_to include("Handled automatically")
+    end
+
+    context "with FSRS_ENABLED=1 (the live prod path)" do
+      around do |example|
+        old = ENV["FSRS_ENABLED"]
+        ENV["FSRS_ENABLED"] = "1"
+        example.run
+        old.nil? ? ENV.delete("FSRS_ENABLED") : ENV["FSRS_ENABLED"] = old
+      end
+
+      it "greys out both toggles with an explanation that FSRS handles them" do
+        get onboarding_path
+        # one caption per superseded toggle
+        expect(response.body.scan("Handled automatically").size).to eq(2)
+        # the inputs are disabled so they can't masquerade as live controls
+        expect(response.body).to include('disabled="disabled"')
+      end
+    end
+  end
 end
