@@ -72,9 +72,10 @@ class DrillsController < ApplicationController
     else
       @cards = terms.filter_map { |term| build_card(term) }
 
-      # Sentences sprinkle into word drills — but not when the deck IS sentences.
+      # Sentences sprinkle into word drills — but not when the deck IS sentences,
+      # and not when the user has turned interleaved sentences off in Settings.
       @sentences =
-        if @is_sentence_deck
+        if @is_sentence_deck || !current_user.drill_sentences?
           []
         else
           pool = current_user.terms.drillable.where(kind: "sentence").includes(:translations).to_a

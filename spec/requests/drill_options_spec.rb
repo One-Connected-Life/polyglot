@@ -92,4 +92,39 @@ RSpec.describe "Drill options relocation (Finding A)", type: :request do
       expect(user.reload.drill_recall_first).to be(false)
     end
   end
+
+  describe "interleaved sentences are a respected Settings toggle" do
+    before do
+      s = create(:term, deck: Deck.find_by(user: user), kind: "sentence", reviewed: true)
+      create(:translation, term: s, language: "nl", text: "Ik eet brood.")
+      create(:translation, term: s, language: "en", text: "I eat bread.")
+    end
+
+    it "defaults drill_sentences ON for a new user" do
+      expect(user.drill_sentences?).to be(true)
+    end
+
+    it "sprinkles sentence cards into the drill by default" do
+      get play_path
+      expect(response.body).not_to include('data-drill-sentences-value="[]"')
+    end
+
+    it "omits sentence cards when the user turns interleaving off" do
+      user.update!(drill_sentences: false)
+      get play_path
+      expect(response.body).to include('data-drill-sentences-value="[]"')
+    end
+
+    it "persists the drill_sentences pref through Settings" do
+      patch onboarding_path, params: {
+        user: { source_language: "en", learning_languages: ["", "nl"], drill_sentences: "0" }
+      }
+      expect(user.reload.drill_sentences?).to be(false)
+    end
+
+    it "exposes an Interleave sentences toggle on the Settings page" do
+      get onboarding_path
+      expect(response.body).to include("Interleave sentences")
+    end
+  end
 end

@@ -171,6 +171,14 @@
             <span class="block text-[11px] text-gray-400 dark:text-gray-500">Speak the correct answer aloud when you miss.</span>
           </span>
         </label>
+
+        <label class="flex cursor-pointer items-start gap-2.5">
+          <%= f.check_box :drill_sentences, class: "mt-0.5 h-4 w-4 rounded accent-brand-indigo" %>
+          <span class="text-sm">
+            Interleave sentences
+            <span class="block text-[11px] text-gray-400 dark:text-gray-500">Sprinkle short example sentences (built from words you've practiced) between word cards. Turn off for words only.</span>
+          </span>
+        </label>
       </div>
     </div>
 
