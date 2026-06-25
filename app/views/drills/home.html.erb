@@ -103,7 +103,7 @@
       <%= link_to "#{target.upcase} → #{source.upcase}", play_path(deck: "all", from: target, to: source),
             class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
       <%# Multi-language entry point: only shown when the user has 2+ learning languages %>
-      <% if current_user.multi_language_drill? %>
+      <% if current_user.multi_language_weave? %>
         <%= link_to "#{source.upcase} → all #{learning.size}", play_path(deck: "all", from: source, multi: "1"),
               class: "rounded-md border border-brand-coral bg-brand-coral px-2.5 py-1 font-medium text-white shadow-sm hover:bg-brand-coral/90" %>
       <% end %>
@@ -122,7 +122,7 @@
               class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
         <%= link_to "#{target.upcase} → #{source.upcase}", play_path(deck: "basics", from: target, to: source),
               class: "rounded-md border border-gray-300 px-2.5 py-1 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
-        <% if current_user.multi_language_drill? %>
+        <% if current_user.multi_language_weave? %>
           <%= link_to "#{source.upcase} → all #{learning.size}", play_path(deck: "basics", from: source, multi: "1"),
                 class: "rounded-md border border-brand-coral bg-brand-coral px-2.5 py-1 font-medium text-white shadow-sm hover:bg-brand-coral/90" %>
         <% end %>
@@ -172,7 +172,7 @@
                       class: "rounded-md border border-gray-300 px-2 py-0.5 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
                 <%= link_to "#{source.upcase}→#{target.upcase}", play_path(deck: deck.slug, from: source, to: target),
                       class: "rounded-md border border-gray-300 px-2 py-0.5 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800" %>
-                <% if current_user.multi_language_drill? %>
+                <% if current_user.multi_language_weave? %>
                   <%= link_to "→all #{learning.size}", play_path(deck: deck.slug, from: source, multi: "1"),
                         class: "rounded-md border border-brand-coral bg-brand-coral px-2 py-0.5 font-medium text-white hover:bg-brand-coral/90" %>
                 <% end %>

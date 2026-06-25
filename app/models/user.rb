@@ -101,9 +101,19 @@ class User < ApplicationRecord
     list.presence || [ target_language ].compact
   end
 
-  # Whether multi-language drill mode is available (user has 2+ target languages).
+  # Whether multi-language drill mode is AVAILABLE (user has 2+ target languages).
+  # Availability is necessary but not sufficient — the weave only runs when the
+  # user has also opted in via show_other_languages (default OFF). See
+  # multi_language_weave? for the "actually run it" check.
   def multi_language_drill?
     active_learning_languages.size >= 2
+  end
+
+  # Whether the multi-language "weave" should actually run: the user opted in
+  # (show_other_languages) AND has 2+ learning languages. Default is single-language
+  # (one prompt, one target) — the weave is opt-in so mobile isn't overwhelming. (#fix-1)
+  def multi_language_weave?
+    show_other_languages? && multi_language_drill?
   end
 
   def target_language_name

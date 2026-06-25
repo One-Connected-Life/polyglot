@@ -126,6 +126,20 @@
       <%# Toggle checkboxes. Hidden sentinel before each so an unchecked box still
           posts "0" (Rails check_box does this automatically via its hidden field). %>
       <div class="mt-4 space-y-3">
+        <%# Show other languages — opt-in multi-language "weave" (default OFF →
+            single-language). Only meaningful with 2+ learning languages; shown
+            always so the choice is discoverable, but noted as needing more langs. %>
+        <label class="flex cursor-pointer items-start gap-2.5">
+          <%= f.check_box :show_other_languages, class: "mt-0.5 h-4 w-4 rounded accent-brand-coral" %>
+          <span class="text-sm">
+            Show other languages
+            <span class="block text-[11px] text-gray-400 dark:text-gray-500">
+              Weave all the languages you're learning into one card.
+              <% unless @user.multi_language_drill? %>Add a second learning language above to use this.<% else %>Off = a clean single-language card (recommended).<% end %>
+            </span>
+          </span>
+        </label>
+
         <label class="flex cursor-pointer items-start gap-2.5">
           <%= f.check_box :skip_easy, class: "mt-0.5 h-4 w-4 rounded accent-brand-indigo" %>
           <span class="text-sm">

@@ -96,6 +96,32 @@ RSpec.describe "Multi-language drill", type: :request do
     end
   end
 
+  describe "weave is driven by the persisted pref, not just the param (#fix-1)" do
+    it "runs the weave when show_other_languages is ON, with no multi param" do
+      user = build_multi_user
+      user.update!(show_other_languages: true)
+      sign_in(user)
+      get play_path(from: "en")
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("multiCard")
+    end
+
+    it "stays single-language when show_other_languages is OFF (default), no param" do
+      user = build_multi_user # default show_other_languages: false
+      sign_in(user)
+      get play_path(from: "en")
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("multiCard")
+    end
+
+    it "persists the pref when multi=1 is passed so the toggle stays in sync" do
+      user = build_multi_user
+      sign_in(user)
+      expect { get play_path(multi: "1", from: "en") }
+        .to change { user.reload.show_other_languages? }.from(false).to(true)
+    end
+  end
+
   describe "POST /attempts (multi-language recording)" do
     it "records one attempt per target language" do
       user = build_multi_user

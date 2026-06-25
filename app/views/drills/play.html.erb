@@ -120,7 +120,9 @@
                data-drill-target="multiLangLabel"></p>
             <input data-drill-target="multiInput"
                    type="text"
-                   autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+                   <%# Autocorrect ON so iOS helps with typos; autocapitalize off (single
+                       vocab words). English keyboard may "fix" foreign words — accepted. %>
+                   autocomplete="off" autocapitalize="off" autocorrect="on" spellcheck="true"
                    class="mt-2 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-center text-lg outline-none focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-brand-sky dark:focus:ring-brand-sky/20">
           </div>
 
@@ -135,29 +137,28 @@
           <div data-drill-target="detail"
                class="mx-auto mt-4 hidden max-w-sm divide-y divide-gray-100 border-t border-gray-100 pt-2 text-left dark:divide-gray-800 dark:border-gray-800"></div>
 
-          <%# action buttons %>
-          <div class="mt-5 flex items-stretch justify-center gap-3">
+          <%# action buttons (#fix-3: full-width Next, brand-coral) %>
+          <div class="mt-5 flex items-stretch gap-3">
             <button type="button" data-drill-target="backBtn" data-action="drill#prev"
                     aria-label="Previous concept"
-                    class="hidden rounded-2xl border border-gray-300 px-5 text-2xl leading-none text-gray-500 transition active:scale-95 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800">
+                    class="hidden shrink-0 rounded-2xl border border-gray-300 px-5 text-2xl leading-none text-gray-500 transition active:scale-95 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800">
               ←
             </button>
             <button type="button" data-drill-target="multiCheck" data-action="drill#grade"
                     aria-label="Check answer"
-                    class="min-w-[12rem] rounded-2xl bg-brand-indigo px-8 py-5 text-center text-lg font-semibold text-white shadow-sm transition active:scale-95 hover:bg-brand-indigo/90 dark:bg-brand-indigo dark:text-white dark:hover:bg-brand-indigo/80">
+                    class="w-full rounded-2xl bg-brand-indigo px-8 py-5 text-center text-lg font-semibold text-white shadow-sm transition active:scale-95 hover:bg-brand-indigo/90 dark:bg-brand-indigo dark:text-white dark:hover:bg-brand-indigo/80">
               Check ✓
             </button>
             <button type="button" data-drill-target="multiNext" data-action="drill#next"
                     aria-label="Next concept"
-                    class="hidden min-w-[12rem] rounded-2xl bg-brand-indigo px-8 py-5 text-center text-lg font-semibold text-white shadow-sm transition active:scale-95 hover:bg-brand-indigo/90 dark:bg-brand-indigo dark:text-white dark:hover:bg-brand-indigo/80">
-              Next concept →
+                    class="hidden w-full rounded-2xl bg-brand-coral px-8 py-5 text-center text-xl font-semibold text-white shadow-sm transition active:scale-95 hover:bg-brand-coral/90">
+              Next <span class="ml-2 align-middle text-3xl leading-none">→</span>
             </button>
           </div>
 
-          <p class="mt-6 text-center text-[11px] text-gray-400">
-            <span class="font-medium">swipe →</span> forward / <span class="font-medium">swipe ←</span> back
-            <br class="sm:hidden">
-            <span class="hidden sm:inline">· <span class="font-medium">Enter</span> check · <span class="font-medium">→</span> next concept · <span class="font-medium">←</span> back</span>
+          <p class="mt-5 text-center text-[11px] text-gray-400">
+            Tap <span class="font-medium">Next →</span> or <span class="font-medium">swipe →</span> to advance
+            <span class="hidden sm:inline">· <span class="font-medium">Enter</span> check · <span class="font-medium">→</span> next · <span class="font-medium">←</span> back</span>
           </p>
         </div>
       </div>
@@ -179,7 +180,9 @@
         </div>
 
         <input data-drill-target="input" type="text"
-               autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+               <%# Autocorrect ON so iOS helps with typos; autocapitalize off (single
+                   vocab words). English keyboard may "fix" foreign words — accepted. %>
+               autocomplete="off" autocapitalize="off" autocorrect="on" spellcheck="true"
                placeholder="<%= Translation::LANGUAGES[@to].downcase %>…"
                class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-xl outline-none focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-brand-sky dark:focus:ring-brand-sky/20">
 
@@ -207,28 +210,30 @@
         <div data-drill-target="detail"
              class="mx-auto mt-3 hidden max-w-sm divide-y divide-gray-100 border-t border-gray-100 pt-2 text-left dark:divide-gray-800 dark:border-gray-800"></div>
 
-        <div class="mt-6 flex items-stretch justify-center gap-3">
+        <%# Action row. While answering: a wide Check button. After reveal: a big,
+            full-width thumb-friendly Next → button (the obvious "keep going"
+            affordance), with a small ← back tucked beside it. (#fix-3) %>
+        <div class="mt-6 flex items-stretch gap-3">
           <button type="button" data-drill-target="backBtn" data-action="drill#prev"
                   aria-label="Previous word"
-                  class="hidden rounded-2xl border border-gray-300 px-5 text-2xl leading-none text-gray-500 transition active:scale-95 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800">
+                  class="hidden shrink-0 rounded-2xl border border-gray-300 px-5 text-2xl leading-none text-gray-500 transition active:scale-95 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800">
             ←
           </button>
           <button type="button" data-drill-target="checkBtn" data-action="drill#grade"
                   aria-label="Check answer"
-                  class="hidden min-w-[12rem] rounded-2xl bg-brand-indigo px-8 py-5 text-center text-lg font-semibold text-white shadow-sm transition active:scale-95 hover:bg-brand-indigo/90 dark:bg-brand-indigo dark:text-white dark:hover:bg-brand-indigo/80">
+                  class="hidden w-full rounded-2xl bg-brand-indigo px-8 py-5 text-center text-lg font-semibold text-white shadow-sm transition active:scale-95 hover:bg-brand-indigo/90 dark:bg-brand-indigo dark:text-white dark:hover:bg-brand-indigo/80">
             Check <span class="ml-2 align-middle">✓</span>
           </button>
           <button type="button" data-drill-target="nextBtn" data-action="drill#next"
                   aria-label="Next word"
-                  class="hidden min-w-[12rem] rounded-2xl bg-brand-indigo px-8 py-5 text-center text-lg font-semibold text-white shadow-sm transition active:scale-95 hover:bg-brand-indigo/90 dark:bg-brand-indigo dark:text-white dark:hover:bg-brand-indigo/80">
-            Next word <span class="ml-2 align-middle text-3xl leading-none">→</span>
+                  class="hidden w-full rounded-2xl bg-brand-coral px-8 py-5 text-center text-xl font-semibold text-white shadow-sm transition active:scale-95 hover:bg-brand-coral/90">
+            Next <span class="ml-2 align-middle text-3xl leading-none">→</span>
           </button>
         </div>
 
-        <p class="mt-6 text-center text-[11px] text-gray-400">
-          Tap a button, or <span class="font-medium">swipe →</span> forward / <span class="font-medium">swipe ←</span> back
-          <br class="sm:hidden">
-          <span class="hidden sm:inline">· </span><span class="font-medium">Enter</span> check · <span class="font-medium">→ ↓ Space</span> next · <span class="font-medium">← ↑</span> back
+        <p class="mt-5 text-center text-[11px] text-gray-400">
+          Tap <span class="font-medium">Next →</span> or <span class="font-medium">swipe →</span> to advance
+          <span class="hidden sm:inline">· <span class="font-medium">Enter</span> check · <span class="font-medium">→ ↓ Space</span> next · <span class="font-medium">← ↑</span> back</span>
         </p>
       </div>
     <% end %>

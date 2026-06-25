@@ -34,9 +34,15 @@ class DrillsController < ApplicationController
     @autoplay_prompt = current_user.autoplay_prompt?
     @autoplay_wrong  = current_user.autoplay_wrong?
 
-    # Multi-language drill: source → N targets in a sequential-reveal card.
-    # Activated when multi=1 is in the params (set from the home deck picker).
-    @multi = params[:multi] == "1" && current_user.multi_language_drill?
+    # Multi-language "weave": source → N targets in a sequential-reveal card.
+    # Single-language is the DEFAULT (one prompt, one target); the weave is an
+    # opt-in persisted pref (show_other_languages, default OFF) edited in Settings.
+    # A multi=1 URL param (home deck links, old deep links) still works and updates
+    # the saved pref, so the toggle and the links stay in sync. (#fix-1)
+    if params.key?(:multi) && current_user.show_other_languages? != (params[:multi] == "1")
+      current_user.update!(show_other_languages: params[:multi] == "1")
+    end
+    @multi = current_user.multi_language_weave?
     if @multi
       session[:drill_targets] = params[:targets]&.split(",") if params.key?(:targets)
       @target_langs = (session[:drill_targets].presence || current_user.active_learning_languages)

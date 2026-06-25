@@ -25,7 +25,10 @@ module Api
           current_user.update!(drill_order: params[:order])
         end
 
-        @multi = params[:multi] == "1" && current_user.multi_language_drill?
+        # Default to the user's saved weave pref (show_other_languages, default OFF);
+        # an explicit multi param still overrides for this request. (#fix-1)
+        weave = params.key?(:multi) ? params[:multi] == "1" : current_user.show_other_languages?
+        @multi = weave && current_user.multi_language_drill?
         if @multi
           chosen = params[:targets].present? ? params[:targets].split(",") : nil
           @target_langs = (chosen.presence || current_user.active_learning_languages)

@@ -39,6 +39,30 @@ RSpec.describe "Drill options relocation (Finding A)", type: :request do
       .to change { user.reload.skip_easy? }.from(false).to(true)
   end
 
+  describe "single-language is the default; weave is opt-in (#fix-1)" do
+    it "defaults show_other_languages to OFF for a new user" do
+      expect(user.show_other_languages?).to be(false)
+    end
+
+    it "renders the single-language card (not the weave) by default" do
+      get play_path
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("multiCard")
+    end
+
+    it "persists the show_other_languages pref through Settings" do
+      patch onboarding_path, params: {
+        user: { source_language: "en", learning_languages: ["", "nl"], show_other_languages: "1" }
+      }
+      expect(user.reload.show_other_languages?).to be(true)
+    end
+
+    it "exposes a Show other languages toggle on the Settings page" do
+      get onboarding_path
+      expect(response.body).to include("Show other languages")
+    end
+  end
+
   describe "default direction is a respected Settings preference (coordinator add)" do
     it "defaults bare /play to the recall-first direction (target→source, NL→EN)" do
       # New users default to recall_first = true (recognition, the easier path).
