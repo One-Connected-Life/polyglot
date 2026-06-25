@@ -41,6 +41,9 @@ export default class extends Controller {
     // Autoplay prefs come from the server (saved per-user in Settings); no longer
     // a localStorage source of truth. (Finding A)
     autoplayPrompt: Boolean, autoplayWrong: Boolean,
+    // What to play on a correct answer: "word" (an enthusiastic "Yes!"),
+    // "sound" (a quick synth chime), "answer" (speak the English word), "none".
+    correctFeedback: String,
   }
 
   connect() {
@@ -192,6 +195,7 @@ export default class extends Controller {
     this.render()
 
     if (result.correct) {
+      this.cheer(card)  // audio reward on correct (Settings: "On a correct answer")
       saved.then((data) => {
         if (!data) return
         // FSRS path: fire the bigger "retired" overlay at the crossing moment.
@@ -689,6 +693,51 @@ export default class extends Controller {
 
   speak(text, code) {
     pronounce(text, code, { onResult: ({ hasVoice, lang }) => this.flagMissingVoice(hasVoice, lang) })
+  }
+
+  // Audio reward on a correct answer, per the user's Settings choice. Fires from
+  // grade(), which is always user-initiated (Enter / tap / Check) — so the
+  // AudioContext can unlock even in the iOS WKWebView shell.
+  cheer(card) {
+    switch (this.correctFeedbackValue) {
+      case "word":   // an enthusiastic "Yes!" — faster + higher than normal TTS
+        pronounce("Yes!", "en", { rate: 1.1, pitch: 1.4 })
+        break
+      case "answer": // speak the English word (falls back to the answer language)
+        if (card.english) pronounce(card.english, "en")
+        else this.speak(card.answer, this.toValue)
+        break
+      case "sound":
+        this.playChime()
+        break
+      // "none" (and anything unknown): stay silent
+    }
+  }
+
+  // A short bright two-note chime via Web Audio — no asset to ship, works in the
+  // browser and the WKWebView shell. Context is created lazily and reused.
+  playChime() {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext
+      if (!Ctx) return
+      this.audioCtx ||= new Ctx()
+      const ctx = this.audioCtx
+      if (ctx.state === "suspended") ctx.resume()
+      const now = ctx.currentTime
+      ;[784, 1175].forEach((freq, i) => {   // G5 → D6, a bright rising fifth
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.type = "sine"
+        osc.frequency.value = freq
+        const t = now + i * 0.09
+        gain.gain.setValueAtTime(0.0001, t)
+        gain.gain.exponentialRampToValueAtTime(0.25, t + 0.02)
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18)
+        osc.connect(gain).connect(ctx.destination)
+        osc.start(t)
+        osc.stop(t + 0.2)
+      })
+    } catch (_e) { /* audio unavailable — stay silent */ }
   }
 
   flagMissingVoice(hasVoice, lang) {

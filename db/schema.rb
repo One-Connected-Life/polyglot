@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_25_143245) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_25_153850) do
   create_table "attempts", force: :cascade do |t|
     t.boolean "correct", default: false, null: false
     t.datetime "created_at", null: false
@@ -120,6 +120,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_143245) do
     t.boolean "autoplay_prompt", default: false, null: false
     t.boolean "autoplay_wrong", default: false, null: false
     t.string "avatar_url"
+    t.string "correct_feedback", default: "word", null: false
     t.datetime "created_at", null: false
     t.string "drill_direction", default: "forward"
     t.string "drill_order", default: "smart", null: false

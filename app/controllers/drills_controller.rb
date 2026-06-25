@@ -198,6 +198,9 @@ class DrillsController < ApplicationController
       prompt_translit: prompt.translit,
       prompt_non_latin: prompt.non_latin?,
       answer: answer.text,
+      # English word for the "speak the answer in English" correct-feedback option,
+      # always populated regardless of reveal-panel gating.
+      english: term.translation("en")&.text,
       answer_article: answer.article,
       accept: answer.accepted_answers,
       difficulty: (term.kind == "word" ? term.difficulty(@from, @to).to_s : ""),

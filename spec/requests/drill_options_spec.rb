@@ -173,4 +173,34 @@ RSpec.describe "Drill options relocation (Finding A)", type: :request do
       end
     end
   end
+
+  describe "correct-answer audio feedback (no longer silent on correct)" do
+    it "defaults to 'word' (an enthusiastic Yes!)" do
+      expect(user.correct_feedback).to eq("word")
+    end
+
+    it "carries the saved choice into the drill dataset" do
+      user.update!(correct_feedback: "sound")
+      get play_path
+      expect(response.body).to include('data-drill-correct-feedback-value="sound"')
+    end
+
+    it "ships the English word on each card for the 'speak the answer' option" do
+      get play_path
+      # card JSON is HTML-escaped inside the data attribute (" -> &quot;)
+      expect(response.body).to include("&quot;english&quot;")
+    end
+
+    it "persists the choice through Settings" do
+      patch onboarding_path, params: {
+        user: { source_language: "en", learning_languages: ["", "nl"], correct_feedback: "none" }
+      }
+      expect(user.reload.correct_feedback).to eq("none")
+    end
+
+    it "exposes the 'On a correct answer' control on the Settings page" do
+      get onboarding_path
+      expect(response.body).to include("On a correct answer")
+    end
+  end
 end

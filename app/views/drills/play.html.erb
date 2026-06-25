@@ -22,6 +22,7 @@
        data-drill-multi-value="<%= @multi ? 'true' : 'false' %>"
        data-drill-autoplay-prompt-value="<%= @autoplay_prompt ? 'true' : 'false' %>"
        data-drill-autoplay-wrong-value="<%= @autoplay_wrong ? 'true' : 'false' %>"
+       data-drill-correct-feedback-value="<%= current_user.correct_feedback %>"
        data-drill-record-url-value="<%= attempts_path %>"
        data-drill-ease-url-template-value="<%= ease_term_path('__ID__') %>"
        data-drill-fsrs-enabled-value="<%= ENV['FSRS_ENABLED'] == '1' %>">

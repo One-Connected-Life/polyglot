@@ -188,6 +188,19 @@
           </span>
         </label>
       </div>
+
+      <div class="mt-4">
+        <label class="mb-1 block text-sm font-medium">On a correct answer</label>
+        <%= f.select :correct_feedback,
+              options_for_select([
+                ['Say "Yes!"', "word"],
+                ["Celebration sound", "sound"],
+                ["Speak the answer (English)", "answer"],
+                ["Nothing", "none"],
+              ], @user.correct_feedback),
+              {}, class: field_classes %>
+        <p class="mt-1 text-[11px] text-gray-400 dark:text-gray-500">What you hear when you get a card right. Drilling was silent on correct before — that felt a bit flat.</p>
+      </div>
     </div>
 
     <%= f.submit "Save & start drilling", class: primary_button_classes %>

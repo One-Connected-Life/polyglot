@@ -21,7 +21,7 @@ function voiceFor(code) {
 
 // Speak `text` in language `code` (ISO 639-1). onResult({ hasVoice, lang }) reports
 // whether a real voice was found, so callers can warn instead of mumbling English.
-export function speak(text, code, { onResult } = {}) {
+export function speak(text, code, { onResult, rate, pitch } = {}) {
   if (!("speechSynthesis" in window) || !text) return
   const synth = window.speechSynthesis
 
@@ -34,7 +34,8 @@ export function speak(text, code, { onResult } = {}) {
     } else {
       utterance.lang = LANG_TAGS[code] || code
     }
-    utterance.rate = 0.9
+    utterance.rate = rate ?? 0.9
+    if (pitch != null) utterance.pitch = pitch
 
     // WebKit (iOS WKWebView/Safari) clips short utterances when speak() is called
     // immediately after cancel(): the cancel races the new utterance and chops it
