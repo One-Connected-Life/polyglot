@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%# CSRF meta so the auto-submitted form below carries a valid token —
+        keeps omniauth-rails_csrf_protection intact (no GET initiation). %>
+    <%= csrf_meta_tags %>
+    <title>Signing in…</title>
+    <style>
+      body { font-family: -apple-system, system-ui, sans-serif; display: flex;
+             min-height: 100vh; align-items: center; justify-content: center;
+             margin: 0; color: #475569; }
+    </style>
+  </head>
+  <body>
+    <p>Redirecting to sign in…</p>
+
+    <%# Real POST to /auth/<provider> with Rails' authenticity_token, which
+        omniauth-rails_csrf_protection requires. data-turbo:false so it's a full
+        browser navigation inside Safari, not a Turbo fetch. %>
+    <%= form_with url: @provider_path, method: :post, id: "oauth-form",
+                  data: { turbo: false } do %>
+    <% end %>
+
+    <script>
+      // Auto-submit immediately. The visible copy is only seen if JS is off
+      // or the submit is briefly delayed.
+      document.getElementById("oauth-form").submit();
+    </script>
+  </body>
+</html>

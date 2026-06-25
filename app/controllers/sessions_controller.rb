@@ -28,6 +28,17 @@ class SessionsController < ApplicationController
     user = auth && User.from_omniauth(auth)
 
     if user&.persisted?
+      # iOS handoff (App A): the flow ran in ASWebAuthenticationSession (Safari),
+      # so this Safari-side session cookie is useless to the WKWebView. Instead
+      # mint a one-time token and bounce out to the custom URL scheme; the shell
+      # redeems it at /ios/session_handoff to set the real WKWebView cookie.
+      # See IosOauthController for the full handoff dance.
+      if (scheme = session.delete(:ios_callback_scheme)) && session.delete(:ios_oauth_handoff)
+        handoff = OauthHandoff.issue!(user)
+        return redirect_to "#{scheme}://auth-complete?handoff=#{handoff.token}",
+          allow_other_host: true
+      end
+
       start_new_session_for user
       redirect_to after_authentication_url
     elsif user && !user.persisted?
@@ -42,6 +53,14 @@ class SessionsController < ApplicationController
 
   # OmniAuth failure handler (user denied access, CSRF/state mismatch, provider error).
   def omniauth_failure
+    # In an iOS handoff, ASWebAuth is waiting for the custom URL scheme — bounce
+    # back to it (no token) so the session closes cleanly rather than dead-ending
+    # on an HTML page inside Safari. The shell treats a tokenless callback as a
+    # silent abort.
+    if (scheme = session.delete(:ios_callback_scheme)) && session.delete(:ios_oauth_handoff)
+      return redirect_to "#{scheme}://auth-complete", allow_other_host: true
+    end
+
     redirect_to new_session_path,
       alert: "Social sign-in didn't complete (#{params[:message].presence || 'cancelled'}). Try again."
   end

@@ -9,6 +9,12 @@ Rails.application.routes.draw do
   get  "/auth/:provider/callback", to: "sessions#omniauth", as: :omniauth_callback
   get  "/auth/failure",            to: "sessions#omniauth_failure"
 
+  # iOS OAuth handoff (App A). Google blocks OAuth inside an embedded WKWebView,
+  # so the native shell runs the flow in ASWebAuthenticationSession (Safari) and
+  # bridges the result back via a one-time token. See IosOauthController.
+  get "/ios/oauth_start",     to: "ios_oauth#start",   as: :ios_oauth_start
+  get "/ios/session_handoff", to: "ios_oauth#handoff", as: :ios_session_handoff
+
   get "onboarding", to: "onboarding#show"
   patch "onboarding", to: "onboarding#update"
 

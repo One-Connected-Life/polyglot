@@ -29,11 +29,16 @@
 
   <%# Social login (oauth-providers). Each button renders ONLY when its provider's
       ENV credentials are configured, so prod isn't broken before creds are set.
-      button_to issues a POST to /auth/<provider>, required by
-      omniauth-rails_csrf_protection. %>
+      On the WEB, button_to issues a POST to /auth/<provider> (required by
+      omniauth-rails_csrf_protection). INSIDE App A (Hotwire Native), Google blocks
+      OAuth in the WKWebView (Error 403 disallowed_useragent), so we render a GET
+      link instead — the native shell intercepts /auth/<provider> link taps
+      (OAuthCoordinator.isOAuthStartURL) and diverts them to
+      ASWebAuthenticationSession. A POST form would submit in-webview and 403. %>
   <% google_on   = ENV["GOOGLE_CLIENT_ID"].present? && ENV["GOOGLE_CLIENT_SECRET"].present? %>
   <% facebook_on = ENV["FACEBOOK_APP_ID"].present?  && ENV["FACEBOOK_APP_SECRET"].present? %>
   <% if google_on || facebook_on %>
+    <% oauth_button_classes = "flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800" %>
     <div class="mt-6 flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
       <span class="h-px flex-1 bg-gray-200 dark:bg-gray-700"></span>
       <span>or</span>
@@ -42,16 +47,22 @@
 
     <div class="mt-4 space-y-3">
       <% if google_on %>
-        <%= button_to "/auth/google_oauth2", data: { turbo: false },
-              class: "flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800" do %>
-          Continue with Google
+        <% if native_app? %>
+          <%# Plain Turbo link (NO data-turbo:false) so Hotwire Native emits a visit
+              proposal the shell's handle(proposal:) can intercept and divert to
+              ASWebAuthenticationSession. A data-turbo:false link would navigate the
+              WKWebView directly → Google's disallowed_useragent 403. %>
+          <%= link_to "Continue with Google", "/auth/google_oauth2", class: oauth_button_classes %>
+        <% else %>
+          <%= button_to "Continue with Google", "/auth/google_oauth2", data: { turbo: false }, class: oauth_button_classes %>
         <% end %>
       <% end %>
 
       <% if facebook_on %>
-        <%= button_to "/auth/facebook", data: { turbo: false },
-              class: "flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800" do %>
-          Continue with Facebook
+        <% if native_app? %>
+          <%= link_to "Continue with Facebook", "/auth/facebook", class: oauth_button_classes %>
+        <% else %>
+          <%= button_to "Continue with Facebook", "/auth/facebook", data: { turbo: false }, class: oauth_button_classes %>
         <% end %>
       <% end %>
     </div>

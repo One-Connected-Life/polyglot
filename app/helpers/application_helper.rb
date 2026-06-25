@@ -17,4 +17,16 @@ module ApplicationHelper
   def language_options
     Translation::LANGUAGES.map { |code, name| [name, code] }
   end
+
+  # True when the page is rendered inside the Hotwire Native WKWebView (App A).
+  # Hotwire Native stamps "Hotwire Native" / "Turbo Native" into the WKWebView's
+  # User-Agent. We key off it so OAuth buttons render as GET links the native
+  # shell can intercept (and divert to ASWebAuthenticationSession) rather than
+  # in-webview POSTs to Google — which Google blocks (Error 403
+  # disallowed_useragent). The ASWebAuth (Safari) request that hits
+  # /ios/oauth_start does NOT carry this marker, which is correct: there we want
+  # the normal CSRF-protected POST flow.
+  def native_app?
+    request.user_agent.to_s.match?(/Hotwire Native|Turbo Native/i)
+  end
 end

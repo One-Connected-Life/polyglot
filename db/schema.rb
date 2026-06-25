@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_24_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_25_120000) do
   create_table "attempts", force: :cascade do |t|
     t.boolean "correct", default: false, null: false
     t.datetime "created_at", null: false
@@ -38,6 +38,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_24_150000) do
     t.integer "user_id"
     t.index ["user_id", "slug"], name: "index_decks_on_user_id_and_slug", unique: true
     t.index ["user_id"], name: "index_decks_on_user_id"
+  end
+
+  create_table "oauth_handoffs", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "redeemed_at"
+    t.string "token", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["token"], name: "index_oauth_handoffs_on_token", unique: true
+    t.index ["user_id"], name: "index_oauth_handoffs_on_user_id"
   end
 
   create_table "schedulings", force: :cascade do |t|
@@ -127,6 +138,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_24_150000) do
   add_foreign_key "attempts", "terms"
   add_foreign_key "attempts", "users"
   add_foreign_key "decks", "users"
+  add_foreign_key "oauth_handoffs", "users"
   add_foreign_key "schedulings", "terms"
   add_foreign_key "schedulings", "users"
   add_foreign_key "sessions", "users"
