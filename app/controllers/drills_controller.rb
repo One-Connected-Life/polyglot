@@ -166,6 +166,15 @@ class DrillsController < ApplicationController
     current_user.drillable_languages + (Translation::LANGUAGES.keys - current_user.drillable_languages)
   end
 
+  # Languages allowed in a card's reveal panel. When the user has NOT opted into
+  # other languages (show_other_languages off, the default), restrict the reveal
+  # to the two languages actually being drilled — otherwise the panel surfaces
+  # every other language the term happens to have, which is exactly what
+  # "show other languages = off" is supposed to prevent. (AT 2026-06-25)
+  def reveal_langs
+    current_user.show_other_languages? ? lang_order : current_user.drillable_languages
+  end
+
   # Single-target card (existing format — unchanged for integrator compatibility).
   def build_card(term)
     prompt = term.translation(@from)
@@ -199,7 +208,7 @@ class DrillsController < ApplicationController
       answer_ipa: answer.ipa,
       answer_translit: answer.translit,
       answer_non_latin: answer.non_latin?,
-      translations: lang_order.filter_map { |code|
+      translations: reveal_langs.filter_map { |code|
         t = term.translation(code)
         { lang: code, text: t.with_article } if t
       },

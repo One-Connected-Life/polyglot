@@ -127,4 +127,26 @@ RSpec.describe "Drill options relocation (Finding A)", type: :request do
       expect(response.body).to include("Interleave sentences")
     end
   end
+
+  describe "show_other_languages gates the card reveal panel, not just the weave" do
+    before do
+      deck = Deck.find_by(user: user)
+      t = create(:term, deck: deck, kind: "word", reviewed: true)
+      create(:translation, term: t, language: "nl", text: "hond")
+      create(:translation, term: t, language: "en", text: "dog")
+      create(:translation, term: t, language: "es", text: "perro") # an OTHER language
+    end
+
+    it "omits other-language translations from the card when the toggle is OFF" do
+      user.update!(show_other_languages: false)
+      get play_path
+      expect(response.body).not_to include("perro")
+    end
+
+    it "includes other-language translations when the toggle is ON" do
+      user.update!(show_other_languages: true)
+      get play_path
+      expect(response.body).to include("perro")
+    end
+  end
 end
