@@ -13,10 +13,23 @@
   <div data-controller="poll" data-poll-interval-value="5000" class="hidden"></div>
 <% end %>
 
-<header class="mb-10 flex items-center justify-end gap-3">
+<header class="mb-6 flex items-center justify-end gap-3">
   <%= link_to "Your words →", stats_path, class: "shrink-0 text-xs text-gray-500 hover:underline dark:text-gray-400" %>
   <%= link_to "Settings", onboarding_path, class: "shrink-0 text-xs text-gray-500 hover:underline dark:text-gray-400" %>
 </header>
+
+<%# PLAY NOW — the one-tap hero. Backports the native shell's raised coral Drill
+    CTA to web: launch All-words drilling in the user's SAVED default direction
+    (no from/to → drills_controller falls back to default_drill_direction). Only
+    shown when there's something to drill; the empty state below guides deck
+    creation otherwise. %>
+<% if @word_count.positive? %>
+  <%= link_to play_path(deck: "all"),
+        class: "mb-8 flex items-center justify-center gap-3 rounded-2xl bg-brand-coral px-6 py-5 text-lg font-semibold text-white shadow-lg shadow-brand-coral/30 transition hover:bg-brand-coral/90 active:scale-[0.99]" do %>
+    <span class="text-2xl leading-none" aria-hidden="true">▶</span>
+    <span>Start drilling</span>
+  <% end %>
+<% end %>
 
 <%= render "drills/translate_box" %>
 
