@@ -27,12 +27,15 @@ RSpec.describe "iOS OAuth handoff", type: :request do
       expect(response.body).to include('name="authenticity_token"')
     end
 
-    it "rejects an unknown provider" do
+    it "rejects an unknown provider by bouncing to the custom scheme with an error" do
+      # When the scheme IS known, the waiting ASWebAuth session must learn why —
+      # bounce back to the custom scheme with ?error= rather than dead-ending on
+      # an HTML page inside Safari (which would look like a silent failure).
       get "/ios/oauth_start", params: { provider: "evil", callback_scheme: "mynewwords" }
-      expect(response).to redirect_to(new_session_path)
+      expect(response).to redirect_to("mynewwords://auth-complete?error=unsupported_request")
     end
 
-    it "rejects a missing callback scheme" do
+    it "rejects a missing callback scheme by redirecting to sign-in (no scheme to bounce to)" do
       get "/ios/oauth_start", params: { provider: "google_oauth2" }
       expect(response).to redirect_to(new_session_path)
     end
@@ -70,17 +73,35 @@ RSpec.describe "iOS OAuth handoff", type: :request do
       expect(response.cookies["session_id"]).to be_present
       expect(response).to redirect_to(root_path)
     end
+
+    it "bounces to the custom scheme with ?error= on an email collision (native handoff)" do
+      # An email/password account already owns this email and the provider email
+      # is unverified → from_omniauth returns an UNPERSISTED User (won't auto-link).
+      # Under a native handoff we must tell the shell WHY (error param) instead of
+      # a tokenless silent abort. (Stubbed because google emails always verify →
+      # auto-link, and facebook isn't wired in the test env's OmniAuth config.)
+      stub_google
+      allow(User).to receive(:from_omniauth).and_return(User.new(email_address: "collide@example.com"))
+      get "/ios/oauth_start", params: { provider: "google_oauth2", callback_scheme: "mynewwords" }
+
+      expect { get "/auth/google_oauth2/callback" }.not_to change(OauthHandoff, :count)
+      expect(response).to redirect_to("mynewwords://auth-complete?error=email_has_password_account")
+      expect(response.cookies["session_id"]).to be_blank
+    end
   end
 
   describe "OmniAuth failure during a native handoff" do
     before(:all) { OmniAuth.config.test_mode = true }
     after(:all)  { OmniAuth.config.test_mode = false }
 
-    it "bounces back to the custom scheme (no token) so ASWebAuth closes cleanly" do
+    it "bounces back to the custom scheme WITH an error reason so the shell can show it" do
       OmniAuth.config.mock_auth[:google_oauth2] = :invalid_credentials
       get "/ios/oauth_start", params: { provider: "google_oauth2", callback_scheme: "mynewwords" }
       get "/auth/google_oauth2/callback"
-      expect(response).to redirect_to("mynewwords://auth-complete")
+      # The failure handler now appends ?error=<reason> (was a tokenless callback
+      # the shell treated as a silent abort). OmniAuth's invalid_credentials
+      # message is "invalid_credentials".
+      expect(response).to redirect_to(%r{\Amynewwords://auth-complete\?error=})
     end
   end
 

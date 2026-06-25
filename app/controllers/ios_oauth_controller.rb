@@ -34,6 +34,17 @@ class IosOauthController < ApplicationController
     scheme   = params[:callback_scheme].to_s
 
     unless ALLOWED_PROVIDERS.include?(provider) && scheme.present?
+      Rails.logger.warn(
+        "[iOS-OAuth] #start REJECTED provider=#{provider.inspect} " \
+        "scheme_present=#{scheme.present?}"
+      )
+      # If we know the custom scheme, bounce back to it with an error so the
+      # waiting ASWebAuth session surfaces the reason on-device instead of
+      # dead-ending on an HTML page inside Safari.
+      if scheme.present?
+        return redirect_to "#{scheme}://auth-complete?error=unsupported_request",
+          allow_other_host: true
+      end
       return redirect_to new_session_path, alert: "Unsupported sign-in request."
     end
 
@@ -41,6 +52,10 @@ class IosOauthController < ApplicationController
     # reads it to decide between the web redirect and the custom-scheme handoff.
     session[:ios_oauth_handoff] = true
     session[:ios_callback_scheme] = scheme
+
+    Rails.logger.info(
+      "[iOS-OAuth] #start flag_set provider=#{provider} scheme=#{scheme}"
+    )
 
     @provider_path = "/auth/#{provider}"
     render :start, layout: false
@@ -50,7 +65,13 @@ class IosOauthController < ApplicationController
   # Routed here by the shell INSIDE the WKWebView. Redeems the single-use token
   # and establishes the real session cookie, then bounces to the post-auth URL.
   def handoff
+    token_present = params[:token].present?
     user = OauthHandoff.redeem!(params[:token])
+
+    Rails.logger.info(
+      "[iOS-OAuth] #handoff token_present=#{token_present} " \
+      "redeem_success=#{!user.nil?}"
+    )
 
     if user
       start_new_session_for user
