@@ -306,4 +306,51 @@ RSpec.describe "Drill options relocation (Finding A)", type: :request do
       expect(response.body).to include("On a correct answer")
     end
   end
+
+  describe "Flow teaches on the answer beat (etymology + phonetics)" do
+    it "defaults flow_teach ON for a new user" do
+      expect(user.flow_teach?).to be(true)
+    end
+
+    it "carries flow_teach=true into the drill dataset by default" do
+      get play_path
+      expect(response.body).to include('data-drill-flow-teach-value="true"')
+    end
+
+    it "reflects flow_teach=false in the drill dataset when turned off" do
+      user.update!(flow_teach: false)
+      get play_path
+      expect(response.body).to include('data-drill-flow-teach-value="false"')
+    end
+
+    it "persists the flow_teach pref through Settings" do
+      patch onboarding_path, params: {
+        user: { source_language: "en", learning_languages: ["", "nl"], flow_teach: "0" }
+      }
+      expect(user.reload.flow_teach?).to be(false)
+    end
+
+    it "exposes the 'Show etymology & phonetics in Flow' control on the Settings page" do
+      get onboarding_path
+      expect(response.body).to include("Show etymology")
+    end
+  end
+
+  describe "pronunciation is first-class — autoplay_prompt defaults ON (review 13)" do
+    it "defaults autoplay_prompt ON for a new user" do
+      expect(user.autoplay_prompt?).to be(true)
+    end
+
+    it "carries autoplay_prompt=true into the drill dataset by default" do
+      get play_path
+      expect(response.body).to include('data-drill-autoplay-prompt-value="true"')
+    end
+
+    it "still lets the user turn it off in Settings" do
+      patch onboarding_path, params: {
+        user: { source_language: "en", learning_languages: ["", "nl"], autoplay_prompt: "0" }
+      }
+      expect(user.reload.autoplay_prompt?).to be(false)
+    end
+  end
 end

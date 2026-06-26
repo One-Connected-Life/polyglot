@@ -45,6 +45,9 @@ class DrillsController < ApplicationController
     @flow_mode        = current_user.flow_mode?
     @flow_gap_prompt  = current_user.flow_gap_prompt
     @flow_gap_next    = current_user.flow_gap_next
+    # Flow teaches on the answer beat: etymology/mnemonic + answer phonetics, not
+    # just the translation (reviews 13 + 14). Default ON.
+    @flow_teach       = current_user.flow_teach?
 
     # Multi-language "weave": source → N targets in a sequential-reveal card.
     # Single-language is the DEFAULT (one prompt, one target); the weave is an

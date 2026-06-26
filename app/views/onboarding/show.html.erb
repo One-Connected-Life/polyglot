@@ -209,6 +209,17 @@
             <%= f.number_field :flow_gap_next, min: 0, max: 60, class: field_classes %>
           </label>
         </div>
+
+        <%# flow_teach (default ON) — teach on the answer beat: the same quiet
+            etymology/mnemonic block + answer phonetics the typing drill reveals,
+            now in Flow too (reviews 13 + 14). Off = a bare word→answer flow. %>
+        <label class="mt-3 flex cursor-pointer items-start gap-2.5 border-t border-gray-200 pt-3 dark:border-gray-800">
+          <%= f.check_box :flow_teach, class: "mt-0.5 h-4 w-4 rounded accent-brand-indigo" %>
+          <span class="text-sm">
+            Show etymology &amp; phonetics in Flow
+            <span class="block text-[11px] text-gray-400 dark:text-gray-500">When the answer is revealed, also show where the word comes from and how to say it — not just the translation.</span>
+          </span>
+        </label>
       </div>
 
       <div class="mt-4">

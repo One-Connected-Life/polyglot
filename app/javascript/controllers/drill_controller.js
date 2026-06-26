@@ -53,6 +53,10 @@ export default class extends Controller {
     // flowGapPrompt sec, reveal+speak answer, wait flowGapNext sec, next card,
     // looping. No typing. Gaps are user-tunable in Settings.
     flowMode: Boolean, flowGapPrompt: Number, flowGapNext: Number,
+    // FLOW TEACH: on the answer beat, also surface the quiet etymology/mnemonic
+    // block + answer phonetics (reviews 13 + 14), not just the translation.
+    // Default true; off → a bare word→answer flow.
+    flowTeach: Boolean,
     // SPEAK MODE: "type" (default) or "speak" the answer aloud. When "speak" and
     // the platform supports recognition (NOT the iOS WKWebView shell), the drill
     // listens for the spoken answer and grades it via the normal path. Falls back
@@ -1032,10 +1036,21 @@ export default class extends Controller {
     if (this.hasBarTarget) this.barTarget.style.width = `${((this.index + 1) / this.cards.length) * 100}%`
   }
 
+  // Reveal beat in Flow. Always shows the answer word. When flow_teach is on
+  // (the default), it ALSO brings the richest learning to the moment: the answer
+  // phonetics (how to say it — review 13) and the quiet etymology/mnemonic block
+  // (where it comes from — review 14), reusing the single-card reveal helpers so
+  // it looks identical to the typing drill. Off → a calm bare word→answer flow.
   flowRevealAnswer(card) {
     const full = card.answer_article ? `${card.answer_article} ${card.answer}` : card.answer
     if (this.hasAnswerTarget) { this.answerTarget.textContent = full; this.answerTarget.classList.remove("invisible") }
-    this.renderPhonetics("answer", card.answer_ipa, card.answer_translit, card.answer_non_latin)
+    if (this.flowTeachValue) {
+      this.renderPhonetics("answer", card.answer_ipa, card.answer_translit, card.answer_non_latin)
+      this.renderEtymology(card)
+    } else {
+      this.clearPhonetics("answer")
+      if (this.hasEtymologyTarget) { this.etymologyTarget.innerHTML = ""; this.etymologyTarget.classList.add("hidden") }
+    }
   }
 
   // Audio reward on a correct answer, per the user's Settings choice. Fires from

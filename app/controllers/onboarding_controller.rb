@@ -31,7 +31,7 @@ class OnboardingController < ApplicationController
       # Drill options (Finding A): persisted per-user, edited here in Settings.
       :drill_order, :skip_easy, :hide_mastered, :autoplay_prompt, :autoplay_wrong,
       :drill_recall_first, :show_other_languages, :drill_sentences, :correct_feedback, :answer_mode,
-      :flow_mode, :flow_gap_prompt, :flow_gap_next,
+      :flow_mode, :flow_gap_prompt, :flow_gap_next, :flow_teach,
       learning_languages: [],
     )
   end

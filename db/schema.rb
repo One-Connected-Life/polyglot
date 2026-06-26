@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_26_223038) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_27_120000) do
   create_table "attempts", force: :cascade do |t|
     t.boolean "correct", default: false, null: false
     t.datetime "created_at", null: false
@@ -118,7 +118,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_223038) do
 
   create_table "users", force: :cascade do |t|
     t.string "answer_mode", default: "type", null: false
-    t.boolean "autoplay_prompt", default: false, null: false
+    t.boolean "autoplay_prompt", default: true, null: false
     t.boolean "autoplay_wrong", default: false, null: false
     t.string "avatar_url"
     t.string "correct_feedback", default: "word", null: false
@@ -131,6 +131,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_223038) do
     t.integer "flow_gap_next", default: 6, null: false
     t.integer "flow_gap_prompt", default: 3, null: false
     t.boolean "flow_mode", default: false, null: false
+    t.boolean "flow_teach", default: true, null: false
     t.integer "generations_count", default: 0, null: false
     t.boolean "hide_mastered", default: true, null: false
     t.string "learning_languages"
