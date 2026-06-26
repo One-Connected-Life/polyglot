@@ -29,7 +29,6 @@
        data-drill-flow-gap-next-value="<%= @flow_gap_next %>"
        data-drill-flow-teach-value="<%= @flow_teach ? 'true' : 'false' %>"
        data-drill-record-url-value="<%= attempts_path %>"
-       data-drill-ease-url-template-value="<%= ease_term_path('__ID__') %>"
        data-drill-fsrs-enabled-value="<%= ENV['FSRS_ENABLED'] == '1' %>">
 
     <%# Clean drill top: just the deck name + direction. The cluster of drill
@@ -164,9 +163,11 @@
       <%# ══════════════════════════════════════════════════════════════
           SINGLE-LANGUAGE CARD DOM (unchanged)
       ══════════════════════════════════════════════════════════════ %>
-      <div data-drill-target="card">
+      <div data-drill-target="card" class="relative">
+        <%# Subtle direction indicator tucked top-right (e.g. "NL → EN") — replaces
+            the old big centered prompt-language label. (#21) %>
+        <p class="absolute right-0 top-0 text-[10px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500"><%= @from.upcase %> → <%= @to.upcase %><span data-drill-target="kindTag" class="text-amber-500"></span></p>
         <div class="pt-12 pb-4 text-center">
-          <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-400"><%= Translation::LANGUAGES[@from] %><span data-drill-target="kindTag" class="text-amber-500"></span></p>
           <p data-drill-target="prompt" class="mt-2 text-4xl font-semibold tracking-tight sm:text-5xl"></p>
           <%# PHONETICS (IPA + translit) with a small replay 🔊 on the SAME line —
               no "hear it" label: in Flow you're already hearing it, this is just a
@@ -180,13 +181,23 @@
           </div>
         </div>
 
-        <input data-drill-target="input" type="text"
-               <%# Autocorrect ON so iOS helps with typos; autocapitalize off (single
-                   vocab words). English keyboard may "fix" foreign words — accepted. %>
-               autocomplete="off" autocapitalize="off" autocorrect="on" spellcheck="true"
-               data-action="focus->drill#onInputFocus"
-               placeholder="<%= Translation::LANGUAGES[@to].downcase %>…"
-               class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-xl outline-none focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-brand-sky dark:focus:ring-brand-sky/20">
+        <%# Input + Check sit on ONE row: input grows, Check is a compact button
+            beside it (items-stretch makes Check match the input's height, ≥44px).
+            After reveal the JS hides Check and shows the big full-width Next below. (#20) %>
+        <div class="flex items-stretch gap-2">
+          <input data-drill-target="input" type="text"
+                 <%# Autocorrect ON so iOS helps with typos; autocapitalize off (single
+                     vocab words). English keyboard may "fix" foreign words — accepted. %>
+                 autocomplete="off" autocapitalize="off" autocorrect="on" spellcheck="true"
+                 data-action="focus->drill#onInputFocus"
+                 placeholder="<%= Translation::LANGUAGES[@to].downcase %>…"
+                 class="min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-xl outline-none focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-brand-sky dark:focus:ring-brand-sky/20">
+          <button type="button" data-drill-target="checkBtn" data-action="drill#grade"
+                  aria-label="Check answer"
+                  class="hidden shrink-0 rounded-lg bg-brand-indigo px-5 py-3 text-base font-semibold text-white shadow-sm transition active:scale-95 hover:bg-brand-indigo/90 dark:bg-brand-indigo dark:text-white dark:hover:bg-brand-indigo/80">
+            Check <span class="ml-1 align-middle">✓</span>
+          </button>
+        </div>
 
         <%# ── Speak mode (answer by voice). Hidden until the JS controller turns
             on speak mode for an answering card; the text input above stays as a
@@ -214,9 +225,6 @@
           <div data-drill-target="answerPhonetics" class="text-center"></div>
           <p data-drill-target="alts" class="text-xs text-gray-500 dark:text-gray-400"></p>
           <p data-drill-target="given" class="hidden text-xs text-gray-400"></p>
-          <p data-drill-target="difficulty" class="mt-1 text-[11px] tracking-wide text-gray-400"></p>
-          <%# [EASE] mid-drill ease nudge (FSRS only) — populated on reveal by drill_controller#renderEaseNudge %>
-          <div data-drill-target="easeNudge" class="mt-2 hidden"></div>
         </div>
 
         <%# [ETYMOLOGY] Prominent insight block right under the answer — populated by drill_controller#renderEtymology %>
@@ -225,19 +233,14 @@
         <div data-drill-target="detail"
              class="mx-auto mt-3 hidden max-w-sm divide-y divide-gray-100 border-t border-gray-100 pt-2 text-left dark:divide-gray-800 dark:border-gray-800"></div>
 
-        <%# Action row. While answering: a wide Check button. After reveal: a big,
-            full-width thumb-friendly Next → button (the obvious "keep going"
-            affordance), with a small ← back tucked beside it. (#fix-3) %>
+        <%# Action row. While answering, Check sits inline beside the input above (#20).
+            After reveal: a big, full-width thumb-friendly Next → button (the obvious
+            "keep going" affordance), with a small ← back tucked beside it. (#fix-3) %>
         <div class="mt-6 flex items-stretch gap-3">
           <button type="button" data-drill-target="backBtn" data-action="drill#prev"
                   aria-label="Previous word"
                   class="hidden shrink-0 rounded-2xl border border-gray-300 px-5 text-2xl leading-none text-gray-500 transition active:scale-95 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800">
             ←
-          </button>
-          <button type="button" data-drill-target="checkBtn" data-action="drill#grade"
-                  aria-label="Check answer"
-                  class="hidden w-full rounded-2xl bg-brand-indigo px-8 py-5 text-center text-lg font-semibold text-white shadow-sm transition active:scale-95 hover:bg-brand-indigo/90 dark:bg-brand-indigo dark:text-white dark:hover:bg-brand-indigo/80">
-            Check <span class="ml-2 align-middle">✓</span>
           </button>
           <button type="button" data-drill-target="nextBtn" data-action="drill#next"
                   aria-label="Next word"

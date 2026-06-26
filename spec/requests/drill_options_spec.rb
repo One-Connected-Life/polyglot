@@ -336,6 +336,46 @@ RSpec.describe "Drill options relocation (Finding A)", type: :request do
     end
   end
 
+  describe "drill chrome declutter + Sign out relocation (#20/#21/#22)" do
+    it "drops the big prompt-language label for a subtle corner direction (NL → EN)" do
+      get play_path  # default recall-first → NL prompt, EN answer
+      expect(response.body).to include("NL → EN")
+      # the old big centered language-name label is gone
+      expect(response.body).not_to include(">Dutch<")
+    end
+
+    it "removes the ease pips + difficulty dots markup from the drill face" do
+      get play_path
+      expect(response.body).not_to include('data-drill-target="difficulty"')
+      expect(response.body).not_to include('data-drill-target="easeNudge"')
+    end
+
+    it "no longer shows Sign out in the top nav (on the drill screen)" do
+      get play_path
+      expect(response.body).not_to include("Sign out")
+    end
+
+    it "shows Sign out at the bottom of the Settings page instead" do
+      get onboarding_path
+      expect(response.body).to include("Sign out")
+    end
+
+    it "cuts the verbose Settings captions Mihai flagged" do
+      get onboarding_path
+      expect(response.body).not_to include("You can change this anytime in settings")
+      expect(response.body).not_to include("recalls the word you know")
+      expect(response.body).not_to include("Speak each word aloud as it appears")
+    end
+
+    it "keeps the trimmed captions (and the ones we explicitly preserved)" do
+      get onboarding_path
+      expect(response.body).to include("Tap to add.")
+      expect(response.body).to include("Applies next session.")
+      expect(response.body).to include("Weaves your languages into one card.")
+      expect(response.body).to include("Smart = spaced-repetition") # preserved
+    end
+  end
+
   describe "pronunciation is first-class — autoplay_prompt defaults ON (review 13)" do
     it "defaults autoplay_prompt ON for a new user" do
       expect(user.autoplay_prompt?).to be(true)

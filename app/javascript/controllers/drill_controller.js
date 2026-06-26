@@ -1,8 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
-import { speak as pronounce, stop as stopSpeech } from "speech"
+import { speak as pronounce, stop as stopSpeech, LANG_TAGS } from "speech"
 import { listen, isListenSupported } from "listen"
-
-const DIFFICULTY_METER = { easy: "● ○ ○", medium: "● ● ○", hard: "● ● ●" }
 
 // Keyboard-driven drill. Prompt -> type -> Enter checks (and reveals the full
 // multi-language card) -> arrows/Space/Enter move. Keys handled on window so
@@ -20,7 +18,7 @@ const DIFFICULTY_METER = { easy: "● ○ ○", medium: "● ● ○", hard: "�
 export default class extends Controller {
   static targets = [
     "prompt", "kindTag", "input", "feedback", "answer", "given", "answerSpeak",
-    "difficulty", "alts", "detail", "nextBtn", "checkBtn", "backBtn",
+    "alts", "detail", "nextBtn", "checkBtn", "backBtn",
     "progress", "score", "bar", "card", "summary", "summaryText", "missed", "voiceHint",
     // FLOW MODE: hands-free auto-play controls (single-card path only).
     "flowControls", "flowToggle", "keyHint",
@@ -32,17 +30,17 @@ export default class extends Controller {
     "multiCheck", "multiNext", "celebrateText", "celebrate",
     // PHONETICS: containers for IPA + translit under the prompt and answer words
     "promptPhonetics", "answerPhonetics",
-    // EASE: mid-drill ease-nudge pips (FSRS only; guarded with hasEaseNudgeTarget)
-    "easeNudge",
     // ETYMOLOGY: prominent "from:" + 💡 block shown under the answer on reveal
     "etymology",
+    // NOTE: the on-card ease pips + difficulty dots were removed (#21); FSRS
+    // still computes/records ease server-side, just no on-face UI.
     // FSRS retire targets — the bigger "Retired" overlay (#axis-4).
     // Only present when FSRS_ENABLED=1; guarded with hasRetireOverlayTarget.
     "retireOverlay", "retireBubble", "retireWord",
   ]
   static values = {
     cards: Array, sentences: Array, from: String, to: String,
-    recordUrl: String, easeUrlTemplate: String, multi: Boolean, fsrsEnabled: Boolean,
+    recordUrl: String, multi: Boolean, fsrsEnabled: Boolean,
     // Autoplay prefs come from the server (saved per-user in Settings); no longer
     // a localStorage source of truth. (Finding A)
     autoplayPrompt: Boolean, autoplayWrong: Boolean,
@@ -453,11 +451,9 @@ export default class extends Controller {
       this.answerTarget.textContent = full
       this.answerTarget.classList.remove("invisible")
       if (this.hasAnswerSpeakTarget) this.answerSpeakTarget.classList.remove("hidden")
-      this.showDifficulty(card.difficulty)
       this.showAlts(card)
       this.renderDetail(card)
       this.renderEtymology(card)
-      this.renderEaseNudge(card)
       if (this.hasNextBtnTarget) this.nextBtnTarget.classList.remove("hidden")
       if (this.hasCheckBtnTarget) this.checkBtnTarget.classList.add("hidden")
       if (this.speakMode) this.exitSpeak()
@@ -477,11 +473,9 @@ export default class extends Controller {
       this.answerTarget.classList.add("invisible")
       this.givenTarget.classList.add("hidden")
       if (this.hasAnswerSpeakTarget) this.answerSpeakTarget.classList.add("hidden")
-      if (this.hasDifficultyTarget) this.difficultyTarget.textContent = ""
       if (this.hasAltsTarget) this.altsTarget.textContent = ""
       if (this.hasDetailTarget) { this.detailTarget.innerHTML = ""; this.detailTarget.classList.add("hidden") }
       if (this.hasEtymologyTarget) { this.etymologyTarget.innerHTML = ""; this.etymologyTarget.classList.add("hidden") }
-      if (this.hasEaseNudgeTarget) { this.easeNudgeTarget.innerHTML = ""; this.easeNudgeTarget.classList.add("hidden") }
       if (this.hasNextBtnTarget) this.nextBtnTarget.classList.add("hidden")
       if (this.hasCheckBtnTarget) this.checkBtnTarget.classList.remove("hidden")
       if (this.speakMode) {
@@ -541,53 +535,6 @@ export default class extends Controller {
     html += `</div>`
     this.etymologyTarget.innerHTML = html
     this.etymologyTarget.classList.remove("hidden")
-  }
-
-  // [EASE] Mid-drill ease nudge — five quiet pips (1 = easy … 5 = hard).
-  // FSRS-only: inert when the flag is off (the legacy path has no scheduling
-  // rows and card.ease is null). The current ease is AI-prefilled; tapping a
-  // pip persists the learner's adjustment for future scheduling.
-  renderEaseNudge(card) {
-    if (!this.hasEaseNudgeTarget) return
-    if (!this.fsrsEnabledValue || !card.ease) {
-      this.easeNudgeTarget.innerHTML = ""
-      this.easeNudgeTarget.classList.add("hidden")
-      return
-    }
-    const current = card.ease
-    const pips = [1, 2, 3, 4, 5].map((n) => {
-      const on = n === current
-      const cls = on
-        ? "bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900"
-        : "text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
-      return `<button type="button" data-action="click->drill#nudgeEase" data-ease="${n}"
-        class="h-11 w-11 rounded-md text-sm tabular-nums ${cls}" aria-label="ease ${n}">${n}</button>`
-    }).join("")
-    this.easeNudgeTarget.innerHTML = `
-      <div class="flex items-center justify-center gap-1.5">
-        <span class="mr-1 text-[10px] uppercase tracking-wide text-gray-400">easy</span>
-        ${pips}
-        <span class="ml-1 text-[10px] uppercase tracking-wide text-gray-400">hard</span>
-      </div>`
-    this.easeNudgeTarget.classList.remove("hidden")
-  }
-
-  // Persist an ease nudge and reflect it immediately in the pips.
-  nudgeEase(event) {
-    const ease = parseInt(event.currentTarget.dataset.ease, 10)
-    if (!ease) return
-    const card = this.cards[this.index]
-    card.ease = ease                 // local echo so the pip highlight updates
-    this.renderEaseNudge(card)
-    if (!this.hasEaseUrlTemplateValue || !this.easeUrlTemplateValue) return
-    const url = this.easeUrlTemplateValue.replace("__ID__", card.id)
-    const token = document.querySelector('meta[name="csrf-token"]')?.content
-    fetch(url, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", "X-CSRF-Token": token || "" },
-      body: JSON.stringify({ ease, from: this.fromValue, to: this.toValue }),
-      keepalive: true,
-    }).catch(() => {})
   }
 
   // --- phonetics helpers ---
@@ -694,11 +641,6 @@ export default class extends Controller {
       : ""
   }
 
-  showDifficulty(level) {
-    if (!this.hasDifficultyTarget) return
-    this.difficultyTarget.textContent = DIFFICULTY_METER[level] ? `${DIFFICULTY_METER[level]}  ${level}` : ""
-  }
-
   showAlts(card) {
     if (!this.hasAltsTarget) return
     const extra = (card.accept || []).filter((a) => this.normalize(a) !== this.normalize(card.answer))
@@ -757,11 +699,21 @@ export default class extends Controller {
   // the normal input, and calls grade() so scoring/cheer/persistence reuse the
   // unchanged single-card path. Typing always stays available as a fallback.
 
-  // Is real speech recognition available? The iOS Hotwire Native shell EXPOSES
-  // webkitSpeechRecognition in its WKWebView but it does NOT work there, so we
-  // treat the native shell as unsupported (UA carries the OCL-App/H token, and
-  // the generic Hotwire/Turbo Native marker) and silently fall back to typing.
+  // The native iOS speech bridge, if the Hotwire Native shell injected it.
+  // Present ONLY inside the iOS app (a WKWebView message handler).
+  nativeSpeech() {
+    return window.webkit?.messageHandlers?.speechBridge || null
+  }
+
+  // Is real speech recognition available? Two paths:
+  //   1. The native iOS bridge (SFSpeechRecognizer) when running inside the app —
+  //      preferred, because webkitSpeechRecognition does NOT work in WKWebView.
+  //   2. Otherwise the Web Speech API (desktop / Android).
+  // The iOS shell EXPOSES webkitSpeechRecognition but it's broken there, so the
+  // UA-marker guard still rejects the web path inside the shell — only the
+  // native bridge enables speech in the app.
   speechAvailable() {
+    if (this.nativeSpeech()) return true
     const ua = (navigator.userAgent || "")
     if (/OCL-App\/[HN]/.test(ua) || /Hotwire Native|Turbo Native/i.test(ua)) return false
     return isListenSupported()
@@ -799,6 +751,9 @@ export default class extends Controller {
     if (!this.speakMode) return
     const result = this.results[this.index]
     if (!result || result.graded) return
+    // Prefer the native iOS recognizer when the bridge is present (Web Speech is
+    // broken in the WKWebView). Falls back to the web path everywhere else.
+    if (this.nativeSpeech()) return this.startListeningNative()
     this.stopListening()
     this.listening = true
     this.setListenStatus("🎙 listening…")
@@ -824,7 +779,62 @@ export default class extends Controller {
 
   stopListening() {
     clearTimeout(this._listenStartTimer)
+    if (this.nativeSpeech()) this.stopListeningNative()
     if (this._listenHandle) { this._listenHandle.abort(); this._listenHandle = null }
+    this.listening = false
+  }
+
+  // ─── NATIVE iOS SPEECH BRIDGE ─────────────────────────────────────────────
+  // Inside the iOS app, window.webkit.messageHandlers.speechBridge talks to a
+  // native SFSpeechRecognizer (Web Speech doesn't work in WKWebView). We define
+  // window.__nativeSpeech with the callbacks the native side invokes, THEN post
+  // {action:"start", lang} to begin. Results feed the same path as the web
+  // recognizer: interim transcripts show live, the final transcript drops into
+  // the input and grades. Any error / denied permission falls back to typing.
+  startListeningNative() {
+    const native = this.nativeSpeech()
+    if (!native) return
+    const result = this.results[this.index]
+    if (!result || result.graded) return
+
+    this.listening = true
+    this.setListenStatus("🎙 listening…")
+    this.toggleSpeakStart(false)
+
+    const bailToTyping = (msg) => {
+      this.listening = false
+      this.setListenStatus(msg)
+      this.toggleSpeakStart(true)
+    }
+
+    window.__nativeSpeech = {
+      onResult: ({ transcript, isFinal } = {}) => {
+        if (!this.speakMode || !this.results[this.index] || this.results[this.index].graded) return
+        if (isFinal) {
+          this.listening = false
+          this.stopListeningNative()
+          this.inputTarget.value = transcript || ""
+          this.grade()  // reuse the unchanged grade path (scoring, cheer, persist)
+        } else {
+          // interim → live display only
+          this.setListenStatus(transcript ? `🎙 ${transcript}` : "🎙 listening…")
+        }
+      },
+      // codes: "not-authorized" | "recognizer-unavailable" | "audio-engine" | "recognition"
+      onError: () => bailToTyping("Didn't catch that — tap 🎙 to retry, or type"),
+      onPermission: ({ granted } = {}) => {
+        if (!granted) bailToTyping("Mic access off — type your answer, or enable it in iOS Settings")
+      },
+    }
+
+    const lang = LANG_TAGS[this.toValue] || this.toValue || "en-US"
+    try { native.postMessage({ action: "start", lang }) }
+    catch (_e) { bailToTyping("Speech unavailable — type your answer") }
+  }
+
+  stopListeningNative() {
+    const native = this.nativeSpeech()
+    if (native) { try { native.postMessage({ action: "stop" }) } catch (_e) {} }
     this.listening = false
   }
 

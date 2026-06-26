@@ -2,7 +2,6 @@
 
 <div class="mx-auto max-w-sm">
   <h1 class="text-2xl font-semibold tracking-tight">What do you want to learn?</h1>
-  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">You can change this anytime in settings.</p>
 
   <% if @user.errors.any? %>
     <ul class="mt-4 space-y-1 rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300">
@@ -30,7 +29,7 @@
         JS controller (language-chips) toggles the visual selected/unselected state. %>
     <div data-controller="language-chips">
       <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">I'm learning</label>
-      <p class="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">Tap to add. Drill any of these together or one at a time.</p>
+      <p class="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">Tap to add.</p>
 
       <%# sentinel so the key always arrives %>
       <input type="hidden" name="user[learning_languages][]" value="">
@@ -80,7 +79,7 @@
         Persisted per-user; every option still works, just from Settings. %>
     <div class="border-t border-gray-200 pt-5 dark:border-gray-800">
       <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-200">Drill options</h2>
-      <p class="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">How drills behave. Applies the next time you start one.</p>
+      <p class="mt-0.5 text-[11px] text-gray-400 dark:text-gray-500">Applies next session.</p>
 
       <%# Default direction: recall-first (target→source, e.g. NL→EN, easier
           recognition — the default) vs production (source→target, harder).
@@ -102,7 +101,6 @@
               </label>
             <% end %>
           </div>
-          <p class="mt-1 text-[11px] text-gray-400 dark:text-gray-500"><%= tgt %> → <%= src %> recalls the word you know (easier). Flip it to practice producing <%= tgt %>.</p>
         </div>
       <% end %>
 
@@ -133,10 +131,7 @@
           <%= f.check_box :show_other_languages, class: "mt-0.5 h-4 w-4 rounded accent-brand-coral" %>
           <span class="text-sm">
             Show other languages
-            <span class="block text-[11px] text-gray-400 dark:text-gray-500">
-              Weave all the languages you're learning into one card.
-              <% unless @user.multi_language_drill? %>Add a second learning language above to use this.<% else %>Off = a clean single-language card (recommended).<% end %>
-            </span>
+            <span class="block text-[11px] text-gray-400 dark:text-gray-500">Weaves your languages into one card.</span>
           </span>
         </label>
 
@@ -168,7 +163,6 @@
           <%= f.check_box :autoplay_prompt, class: "mt-0.5 h-4 w-4 rounded accent-brand-indigo" %>
           <span class="text-sm">
             🔊 Auto-play prompt
-            <span class="block text-[11px] text-gray-400 dark:text-gray-500">Speak each word aloud as it appears.</span>
           </span>
         </label>
 
@@ -249,4 +243,11 @@
 
     <%= f.submit "Save & start drilling", class: primary_button_classes %>
   <% end %>
+
+  <%# Sign out lives here now (moved out of the top nav, #21) — a calm control at
+      the bottom of Settings, clear of the save button. %>
+  <div class="mt-8 border-t border-gray-200 pt-5 dark:border-gray-800">
+    <%= button_to "Sign out", session_path, method: :delete,
+          class: "text-sm text-gray-500 hover:text-brand-indigo hover:underline dark:text-gray-400 dark:hover:text-brand-paper" %>
+  </div>
 </div>
