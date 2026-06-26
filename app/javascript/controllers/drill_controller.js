@@ -730,18 +730,32 @@ export default class extends Controller {
   // (the controller forces @multi off when flow is on). A token cancels any
   // in-flight sequence when the user pauses / leaves so audio never runs away.
 
+  // Flow is set up but does NOT auto-play: browsers leave the Web Audio context
+  // suspended until a user gesture, so an un-gestured start runs without the
+  // keep-warm and words cold-start/clip (the random "works then doesn't"). We
+  // show a greyed "🔇 Tap to start" control; that tap (beginFlow) is the gesture
+  // that unlocks audio + warms the route, so the first word plays whole.
   startFlow() {
+    this.flowStarted = false
     this.flowPaused = false
     this.flowToken = 0
-    this.startWarmKeepAlive()
-    // Hide the interactive bits; show the flow controls.
     if (this.hasInputTarget) { this.inputTarget.disabled = true; this.inputTarget.classList.add("hidden") }
     if (this.hasCheckBtnTarget) this.checkBtnTarget.classList.add("hidden")
     if (this.hasNextBtnTarget) this.nextBtnTarget.classList.add("hidden")
     if (this.hasBackBtnTarget) this.backBtnTarget.classList.add("hidden")
     if (this.hasKeyHintTarget) this.keyHintTarget.classList.add("hidden")
     if (this.hasCardTarget) this.cardTarget.classList.remove("hidden")
+    this.flowShowPrompt(this.cards[this.index])   // show the first word; stay silent until tapped
     this.showFlowControls(true)
+    this.updateFlowToggle()
+  }
+
+  // The tap that turns sound on — runs under a real user gesture, so the
+  // AudioContext resumes and the keep-warm holds the route open from word one.
+  beginFlow() {
+    this.flowStarted = true
+    this.flowPaused = false
+    this.startWarmKeepAlive()
     this.updateFlowToggle()
     this.runFlow()
   }
