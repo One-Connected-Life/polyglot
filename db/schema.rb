@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_26_210000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_26_223038) do
   create_table "attempts", force: :cascade do |t|
     t.boolean "correct", default: false, null: false
     t.datetime "created_at", null: false
@@ -117,6 +117,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_210000) do
   end
 
   create_table "users", force: :cascade do |t|
+    t.string "answer_mode", default: "type", null: false
     t.boolean "autoplay_prompt", default: false, null: false
     t.boolean "autoplay_wrong", default: false, null: false
     t.string "avatar_url"

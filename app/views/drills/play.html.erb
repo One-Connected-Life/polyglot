@@ -23,6 +23,7 @@
        data-drill-autoplay-prompt-value="<%= @autoplay_prompt ? 'true' : 'false' %>"
        data-drill-autoplay-wrong-value="<%= @autoplay_wrong ? 'true' : 'false' %>"
        data-drill-correct-feedback-value="<%= current_user.correct_feedback %>"
+       data-drill-answer-mode-value="<%= @answer_mode %>"
        data-drill-flow-mode-value="<%= @flow_mode ? 'true' : 'false' %>"
        data-drill-flow-gap-prompt-value="<%= @flow_gap_prompt %>"
        data-drill-flow-gap-next-value="<%= @flow_gap_next %>"
@@ -182,8 +183,22 @@
                <%# Autocorrect ON so iOS helps with typos; autocapitalize off (single
                    vocab words). English keyboard may "fix" foreign words — accepted. %>
                autocomplete="off" autocapitalize="off" autocorrect="on" spellcheck="true"
+               data-action="focus->drill#onInputFocus"
                placeholder="<%= Translation::LANGUAGES[@to].downcase %>…"
                class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-xl outline-none focus:border-brand-indigo focus:ring-2 focus:ring-brand-indigo/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-500 dark:focus:border-brand-sky dark:focus:ring-brand-sky/20">
+
+        <%# ── Speak mode (answer by voice). Hidden until the JS controller turns
+            on speak mode for an answering card; the text input above stays as a
+            typing fallback. Not shown in flow/multi modes or where speech
+            recognition is unavailable (incl. the iOS WKWebView shell). ── %>
+        <div data-drill-target="speakControls" class="mt-3 hidden flex-col items-center gap-2">
+          <button type="button" data-drill-target="speakStart" data-action="drill#beginSpeak"
+                  class="hidden inline-flex items-center gap-2 rounded-2xl bg-brand-indigo px-6 py-3 text-base font-semibold text-white shadow-sm transition active:scale-95 hover:bg-brand-indigo/90">
+            🎙 Speak
+          </button>
+          <p data-drill-target="listenStatus" class="text-sm text-gray-500 dark:text-gray-400"></p>
+          <p class="text-[11px] text-gray-400 dark:text-gray-500">or type your answer above</p>
+        </div>
 
         <div class="mt-4 min-h-[4.5rem] text-center">
           <span data-drill-target="feedback" class="text-sm"></span>

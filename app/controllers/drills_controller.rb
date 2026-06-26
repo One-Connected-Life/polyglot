@@ -34,6 +34,11 @@ class DrillsController < ApplicationController
     @autoplay_prompt = current_user.autoplay_prompt?
     @autoplay_wrong  = current_user.autoplay_wrong?
 
+    # Answer mode: "type" (default) or "speak" the answer aloud (browser speech
+    # recognition). Speak mode is single-card interactive only; the JS controller
+    # falls back to typing where speech isn't available (notably the iOS WKWebView).
+    @answer_mode = current_user.answer_mode
+
     # Flow mode: hands-free listen (hear prompt → gap → hear answer → gap → next).
     # Tunable gaps; off by default. Flow runs single-card, so it takes precedence
     # over the multi-language weave below.

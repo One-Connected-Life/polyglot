@@ -212,6 +212,17 @@
       </div>
 
       <div class="mt-4">
+        <label class="mb-1 block text-sm font-medium">Answer by</label>
+        <%= f.select :answer_mode,
+              options_for_select([
+                ["Typing", "type"],
+                ["Speaking aloud", "speak"],
+              ], @user.answer_mode),
+              {}, class: field_classes %>
+        <p class="mt-1 text-[11px] text-gray-400 dark:text-gray-500">Speak mode listens for your spoken answer and grades it like a typed one. Typing is always available as a fallback (and speech isn't supported inside the iOS app, where it stays typing).</p>
+      </div>
+
+      <div class="mt-4">
         <label class="mb-1 block text-sm font-medium">On a correct answer</label>
         <%= f.select :correct_feedback,
               options_for_select([

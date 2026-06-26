@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import { speak as pronounce, stop as stopSpeech } from "speech"
+import { listen, isListenSupported } from "listen"
 
 const DIFFICULTY_METER = { easy: "● ○ ○", medium: "● ● ○", hard: "● ● ●" }
 
@@ -23,6 +24,8 @@ export default class extends Controller {
     "progress", "score", "bar", "card", "summary", "summaryText", "missed", "voiceHint",
     // FLOW MODE: hands-free auto-play controls (single-card path only).
     "flowControls", "flowToggle", "keyHint",
+    // SPEAK MODE: answer-by-voice controls (single-card path only).
+    "speakControls", "speakStart", "listenStatus",
     // Multi-language targets (only present when @multi == true in the view):
     "multiCard", "multiFrom", "multiPrompt", "multiStep",
     "multiDone", "multiLangLabel", "multiInput", "multiUpcoming",
@@ -50,6 +53,11 @@ export default class extends Controller {
     // flowGapPrompt sec, reveal+speak answer, wait flowGapNext sec, next card,
     // looping. No typing. Gaps are user-tunable in Settings.
     flowMode: Boolean, flowGapPrompt: Number, flowGapNext: Number,
+    // SPEAK MODE: "type" (default) or "speak" the answer aloud. When "speak" and
+    // the platform supports recognition (NOT the iOS WKWebView shell), the drill
+    // listens for the spoken answer and grades it via the normal path. Falls back
+    // to typing otherwise. Single-card interactive path only.
+    answerMode: String,
   }
 
   connect() {
@@ -76,6 +84,14 @@ export default class extends Controller {
 
     this.bindSwipe()
 
+    // SPEAK MODE: answer by voice (single-card path only). Off when flow/multi is
+    // on, and off where speech recognition isn't truly available (notably the iOS
+    // WKWebView shell, which EXPOSES the API but doesn't work — see speechAvailable).
+    this.speakMode = this.hasAnswerModeValue && this.answerModeValue === "speak" &&
+                     !this.multiValue && this.speechAvailable()
+    this.micGranted = false
+    this.listening = false
+
     // FLOW MODE: hands-free auto-play. Takes over the single-card DOM and runs
     // the speak→gap→speak→gap→next loop instead of the interactive grade flow.
     this.flowActive = this.hasFlowModeValue && this.flowModeValue && this.cards.length > 0
@@ -93,6 +109,7 @@ export default class extends Controller {
     document.removeEventListener("turbo:before-cache", this.onCachePurge)
     window.removeEventListener("pagehide", this.onCachePurge)
     this.stopSpeech()
+    this.stopListening()
     if (this.flowActive) { this.flowToken = (this.flowToken || 0) + 1; clearTimeout(this._flowTimer) }
     this.stopWarmKeepAlive()
     if (this._warmUnlock) {
@@ -215,6 +232,7 @@ export default class extends Controller {
     }
 
     // --- SINGLE-LANGUAGE grade (unchanged) ---
+    this.stopListening()  // speak mode: end any live capture before grading
     const result = this.results[this.index]
     result.given = this.inputTarget.value
     const accepted = (card.accept && card.accept.length ? card.accept : [card.answer]).map((a) => this.normalize(a))
@@ -438,6 +456,7 @@ export default class extends Controller {
       this.renderEaseNudge(card)
       if (this.hasNextBtnTarget) this.nextBtnTarget.classList.remove("hidden")
       if (this.hasCheckBtnTarget) this.checkBtnTarget.classList.add("hidden")
+      if (this.speakMode) this.exitSpeak()
 
       if (!result.correct && this.normalize(result.given) !== "") {
         this.givenTarget.textContent = `you typed: ${result.given}`
@@ -461,8 +480,12 @@ export default class extends Controller {
       if (this.hasEaseNudgeTarget) { this.easeNudgeTarget.innerHTML = ""; this.easeNudgeTarget.classList.add("hidden") }
       if (this.hasNextBtnTarget) this.nextBtnTarget.classList.add("hidden")
       if (this.hasCheckBtnTarget) this.checkBtnTarget.classList.remove("hidden")
-      this.inputTarget.focus()
-      if (this.autoOn) this.speakPrompt()
+      if (this.speakMode) {
+        this.enterSpeakAnswering()
+      } else {
+        this.inputTarget.focus()
+        if (this.autoOn) this.speakPrompt()
+      }
     }
 
     // Back is available whenever there's a previous card, in either state.
@@ -722,6 +745,112 @@ export default class extends Controller {
 
   speak(text, code) {
     pronounce(text, code, { onResult: ({ hasVoice, lang }) => this.flagMissingVoice(hasVoice, lang) })
+  }
+
+  // ─── SPEAK MODE ───────────────────────────────────────────────────────────
+  // Answer by voice. A SETTING, not a mic button: when answer_mode == "speak"
+  // the answering step listens for the spoken answer, drops the transcript into
+  // the normal input, and calls grade() so scoring/cheer/persistence reuse the
+  // unchanged single-card path. Typing always stays available as a fallback.
+
+  // Is real speech recognition available? The iOS Hotwire Native shell EXPOSES
+  // webkitSpeechRecognition in its WKWebView but it does NOT work there, so we
+  // treat the native shell as unsupported (UA carries the OCL-App/H token, and
+  // the generic Hotwire/Turbo Native marker) and silently fall back to typing.
+  speechAvailable() {
+    const ua = (navigator.userAgent || "")
+    if (/OCL-App\/[HN]/.test(ua) || /Hotwire Native|Turbo Native/i.test(ua)) return false
+    return isListenSupported()
+  }
+
+  // Entering the answering state for a card in speak mode. We do NOT focus the
+  // text input (that would pop the keyboard); instead we show a minimal voice
+  // affordance. Mic capture needs a user gesture, so the FIRST card shows a
+  // "tap to speak" start gesture; once granted, subsequent cards auto-listen.
+  enterSpeakAnswering() {
+    this.showSpeakControls(true)
+    if (this.autoOn) this.speakPrompt()
+    if (this.micGranted) {
+      // Delay a touch when we just spoke the prompt so TTS isn't transcribed.
+      const delay = this.autoOn ? 1200 : 200
+      clearTimeout(this._listenStartTimer)
+      this.setListenStatus("🎙 listening…")
+      this.toggleSpeakStart(false)
+      this._listenStartTimer = setTimeout(() => this.startListening(), delay)
+    } else {
+      this.setListenStatus("")
+      this.toggleSpeakStart(true)
+    }
+  }
+
+  // The start gesture (tap "🎙 Speak"). Unlocks mic capture for this and future
+  // cards in the run.
+  beginSpeak() {
+    this.micGranted = true
+    this.toggleSpeakStart(false)
+    this.startListening()
+  }
+
+  startListening() {
+    if (!this.speakMode) return
+    const result = this.results[this.index]
+    if (!result || result.graded) return
+    this.stopListening()
+    this.listening = true
+    this.setListenStatus("🎙 listening…")
+    this._listenHandle = listen(this.toValue, {
+      onResult: (transcript) => {
+        this.listening = false
+        this.inputTarget.value = transcript
+        this.grade()  // reuse the unchanged grade path (scoring, cheer, persist)
+      },
+      onError: () => {
+        this.listening = false
+        this.setListenStatus("Didn't catch that — tap 🎙 to retry, or type")
+        this.toggleSpeakStart(true)
+      },
+      onEnd: (settled) => {
+        this.listening = false
+        if (!settled && this.speakMode && !this.results[this.index].graded) {
+          this.toggleSpeakStart(true)
+        }
+      },
+    })
+  }
+
+  stopListening() {
+    clearTimeout(this._listenStartTimer)
+    if (this._listenHandle) { this._listenHandle.abort(); this._listenHandle = null }
+    this.listening = false
+  }
+
+  exitSpeak() {
+    this.stopListening()
+    this.showSpeakControls(false)
+  }
+
+  // If the user taps the input to type, stand down the mic — typing is the
+  // fallback and shouldn't fight live capture.
+  onInputFocus() {
+    if (this.listening) {
+      this.stopListening()
+      this.setListenStatus("Typing — or tap 🎙 to speak")
+      this.toggleSpeakStart(true)
+    }
+  }
+
+  showSpeakControls(on) {
+    if (!this.hasSpeakControlsTarget) return
+    this.speakControlsTarget.classList.toggle("hidden", !on)
+    this.speakControlsTarget.classList.toggle("flex", on)
+  }
+
+  setListenStatus(text) {
+    if (this.hasListenStatusTarget) this.listenStatusTarget.textContent = text
+  }
+
+  toggleSpeakStart(on) {
+    if (this.hasSpeakStartTarget) this.speakStartTarget.classList.toggle("hidden", !on)
   }
 
   // ─── FLOW MODE ────────────────────────────────────────────────────────────

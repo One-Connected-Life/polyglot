@@ -241,6 +241,42 @@ RSpec.describe "Drill options relocation (Finding A)", type: :request do
     end
   end
 
+  describe "answer mode — type vs speak the answer aloud" do
+    it "defaults answer_mode to 'type' for a new user" do
+      expect(user.answer_mode).to eq("type")
+    end
+
+    it "carries the saved answer_mode into the drill controller dataset" do
+      get play_path
+      expect(response.body).to include('data-drill-answer-mode-value="type"')
+    end
+
+    it "carries a saved 'speak' answer_mode into the drill dataset" do
+      user.update!(answer_mode: "speak")
+      get play_path
+      expect(response.body).to include('data-drill-answer-mode-value="speak"')
+    end
+
+    it "persists the answer_mode pref through Settings" do
+      patch onboarding_path, params: {
+        user: { source_language: "en", learning_languages: ["", "nl"], answer_mode: "speak" }
+      }
+      expect(user.reload.answer_mode).to eq("speak")
+    end
+
+    it "rejects an invalid answer_mode (keeps it sane)" do
+      patch onboarding_path, params: {
+        user: { source_language: "en", learning_languages: ["", "nl"], answer_mode: "telepathy" }
+      }
+      expect(user.reload.answer_mode).to eq("type")
+    end
+
+    it "exposes an 'Answer by' control on the Settings page" do
+      get onboarding_path
+      expect(response.body).to include("Answer by")
+    end
+  end
+
   describe "correct-answer audio feedback (no longer silent on correct)" do
     it "defaults to 'word' (an enthusiastic Yes!)" do
       expect(user.correct_feedback).to eq("word")
