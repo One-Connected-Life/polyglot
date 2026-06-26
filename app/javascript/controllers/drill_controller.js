@@ -812,6 +812,8 @@ export default class extends Controller {
       const ms = Math.min(9000, 1200 + (text ? text.length : 0) * 90)
       const timer = setTimeout(finish, ms)
       pronounce(text, code, {
+        flush: false,  // flow awaits each utterance + a gap, so never overlaps;
+                       // skipping cancel() avoids the WebKit start-of-word clip.
         onResult: ({ hasVoice, lang }) => this.flagMissingVoice(hasVoice, lang),
         onEnd: () => { clearTimeout(timer); finish() },
       })

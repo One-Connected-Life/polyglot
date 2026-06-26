@@ -21,7 +21,12 @@ function voiceFor(code) {
 
 // Speak `text` in language `code` (ISO 639-1). onResult({ hasVoice, lang }) reports
 // whether a real voice was found, so callers can warn instead of mumbling English.
-export function speak(text, code, { onResult, rate, pitch, onEnd } = {}) {
+// flush (default true): cancel any in-flight speech before speaking. Flow mode
+// passes flush:false — it already awaits each utterance's end + a multi-second
+// gap, so nothing overlaps, and the cancel()→speak() path is exactly what clips
+// the START of WebKit utterances to a blip (Finding C). Opting out of the cancel
+// keeps every flow word intact.
+export function speak(text, code, { onResult, rate, pitch, onEnd, flush = true } = {}) {
   // onEnd fires when the utterance finishes (used by Flow mode to sequence the
   // gap timers). Call it even when we can't speak so callers never stall.
   if (!("speechSynthesis" in window) || !text) { if (onEnd) onEnd(); return }
