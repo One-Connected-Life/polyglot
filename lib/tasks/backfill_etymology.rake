@@ -18,11 +18,13 @@ namespace :etymology do
     # Only target-language rows carry etymology (source rows are plain translations).
     # A row needs backfill when at least one field is still NULL.
     # Join through terms→decks→users to restrict to the user's own target language.
+    # A row needs backfill when etymology OR mnemonic is NULL, or the phonetics
+    # JSON has no "ipa" key yet. (phonetics stores {"ipa":..,"translit":..} as text.)
     scope = Translation
       .joins(term: { deck: :user })
       .where("translations.language = users.target_language")
-      .where(Translation.arel_table[:etymology].eq(nil).or(
-               Translation.arel_table[:mnemonic].eq(nil)))
+      .where("translations.etymology IS NULL OR translations.mnemonic IS NULL " \
+             "OR translations.phonetics IS NULL OR translations.phonetics NOT LIKE '%\"ipa\"%'")
     scope = scope.where(language: language) if language
 
     total = scope.count
@@ -45,7 +47,8 @@ namespace :etymology do
 
         Return a JSON object:
           {"etymology": "<factual origin in ≤12 words, compound → parts + meanings, null if unknown>",
-           "mnemonic": "<one #{source_name} memory hook ≤12 words, null if none>"}
+           "mnemonic": "<one #{source_name} memory hook ≤12 words, null if none>",
+           "ipa": "<IPA transcription of the word, no surrounding slashes/brackets>"}
       PROMPT
 
       if dry_run
@@ -61,11 +64,16 @@ namespace :etymology do
 
         etymology = data["etymology"].presence
         mnemonic  = data["mnemonic"].presence
+        ipa       = data["ipa"].presence
 
-        # Only write fields that are NULL — never overwrite existing human-curated data.
+        # Only write fields that are missing — never overwrite existing curated data.
         attrs = {}
         attrs[:etymology] = etymology if t.etymology.nil?
         attrs[:mnemonic]  = mnemonic  if t.mnemonic.nil?
+        # ipa lives inside the phonetics JSON blob — merge, don't clobber translit.
+        if ipa && t.phonetics_data["ipa"].blank?
+          attrs[:phonetics] = t.phonetics_data.merge("ipa" => ipa).to_json
+        end
 
         t.update_columns(**attrs) if attrs.any?
         updated += 1
