@@ -118,4 +118,31 @@ RSpec.describe "Translate", type: :request do
     post translate_path, params: { text: "...", capture: "1" }
     expect(response).to redirect_to(new_translate_path)
   end
+
+  # #17 — input-language toggle.
+  it "renders an input-language toggle on the Translate page" do
+    get new_translate_path
+    expect(response.body).to include('name="input_language"')
+  end
+
+  it "passes the chosen input language through to the Translator" do
+    expect(Translator).to receive(:new)
+      .with(user, "the dog", input_language: "en")
+      .and_return(instance_double(Translator, call: [{ "target" => "hond", "source" => "dog" }]))
+
+    post translate_path, params: { text: "the dog", capture: "1", input_language: "en" }
+
+    expect(response).to have_http_status(:ok)
+    deck = user.decks.find_by(slug: User::TRANSLATED_SLUG)
+    expect(deck.terms.first.translation("nl").text).to eq("hond")
+  end
+
+  it "defaults the input language to the user's target language" do
+    expect(Translator).to receive(:new)
+      .with(user, "hond", input_language: "nl")
+      .and_return(instance_double(Translator, call: [{ "target" => "hond", "source" => "bread" }]))
+
+    post translate_path, params: { text: "hond", capture: "0" }
+    expect(response).to have_http_status(:ok)
+  end
 end

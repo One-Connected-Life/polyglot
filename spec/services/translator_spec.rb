@@ -38,4 +38,24 @@ RSpec.describe Translator do
 
     expect { Translator.new(user, "hi").call }.to raise_error(Translator::Error)
   end
+
+  # #17 — the input-language toggle. The input may be in the target language (default,
+  # Dutch) or another language (e.g. English); either way the saved item is the Dutch
+  # word as "target". The prompt names whichever language the input is in.
+  describe "input language" do
+    it "defaults the input language to the user's target language (Dutch)" do
+      expect(Translator.new(user, "hond").send(:user_prompt)).to include("entered text in Dutch")
+    end
+
+    it "names the chosen input language when given (English → Dutch entries)" do
+      prompt = Translator.new(user, "the dog", input_language: "en").send(:user_prompt)
+      expect(prompt).to include("entered text in English")
+      # Still asks for the Dutch word as the saved "target".
+      expect(prompt).to include("Dutch")
+    end
+
+    it "falls back to the target language for an unknown input language" do
+      expect(Translator.new(user, "hond", input_language: "zz").send(:user_prompt)).to include("entered text in Dutch")
+    end
+  end
 end

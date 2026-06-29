@@ -12,9 +12,12 @@ class Translator
   MODEL = "claude-haiku-4-5-20251001" # cheap + capable enough for vocab
   MAX_ITEMS = 40 # safety cap on how many items we'll translate at once
 
-  def initialize(user, text)
+  # input_language: ISO code the entered text is in (#17). Defaults to — and falls
+  # back for anything unknown to — the language the user is learning (their target).
+  def initialize(user, text, input_language: nil)
     @user = user
     @text = text.to_s.strip
+    @input_language = Translation::LANGUAGES.key?(input_language.to_s) ? input_language.to_s : user.target_language
   end
 
   # Returns an array of word hashes; [] when there's nothing usable to translate.
@@ -49,16 +52,21 @@ class Translator
       '"translit": "<spelling-based romanization of the target word (e.g. Russian хлеб → khleb)>"' :
       '"translit": null'
 
+    input_name = Translation::LANGUAGES[@input_language] || target
+
     <<~PROMPT
-      The user is learning #{target} (their base language is #{source}). They entered the
-      #{target} text below and want it translated so they can add it to their vocabulary.
+      The user is learning #{target} (their base language is #{source}).
+      They entered text in #{input_name} below and want to add the vocabulary to their #{target} word collection.
 
       If the text is a single word or one short phrase, return exactly ONE item — that
       word or phrase. If it's longer (a sentence, a list, or a paragraph), extract the
       distinct useful vocabulary items (words and short phrases) a learner would want —
       skip filler, names, and trivial function words. Up to #{MAX_ITEMS} items.
 
-      Translate each item from #{target} into #{source}.
+      For every item, "target" is always the #{target} word/phrase and "source" is its
+      #{source} translation — regardless of which language the input was written in. (If the
+      input is already in #{target}, "target" is that word; if it's in #{source} or another
+      language, translate it into #{target} for "target".)
 
       TEXT:
       \"\"\"

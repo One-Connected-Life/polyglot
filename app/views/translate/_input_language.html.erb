@@ -1,0 +1,15 @@
+<%# Input-language toggle (#17): which language the input is in. Defaults to the
+    language being learned (target); the base language (e.g. English) lets you add
+    words the other way. Lives INSIDE each form so it rides the submit; also drives
+    the audio transcription language for Record/Upload. `selected` = chosen code. %>
+<fieldset class="mb-4">
+  <legend class="mb-1.5 text-xs text-gray-400 dark:text-gray-500">I'm entering…</legend>
+  <div class="inline-flex rounded-lg border border-gray-200 bg-gray-100 p-0.5 text-sm dark:border-gray-700 dark:bg-gray-800">
+    <% [current_user.target_language, current_user.source_language].uniq.each do |code| %>
+      <label class="cursor-pointer">
+        <input type="radio" name="input_language" value="<%= code %>" <%= "checked" if selected == code %> class="peer sr-only">
+        <span class="block rounded-md px-3 py-1 text-gray-500 peer-checked:bg-white peer-checked:font-medium peer-checked:text-brand-indigo peer-checked:shadow-sm dark:text-gray-400 dark:peer-checked:bg-gray-700 dark:peer-checked:text-brand-paper"><%= Translation::LANGUAGES[code] %></span>
+      </label>
+    <% end %>
+  </div>
+</fieldset>

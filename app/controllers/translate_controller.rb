@@ -18,6 +18,7 @@ class TranslateController < ApplicationController
   # Standalone Translate page (the tab landing). Mode = type | photo | upload | record.
   def new
     @mode = MODES.include?(params[:mode]) ? params[:mode] : "type"
+    @input_language = input_language
   end
 
   def create
@@ -42,7 +43,7 @@ class TranslateController < ApplicationController
       return redirect_to new_translate_path, alert: "Type a word or phrase to translate."
     end
 
-    @words = Translator.new(current_user, text).call
+    @words = Translator.new(current_user, text, input_language: input_language).call
     if @words.blank?
       return redirect_to new_translate_path, alert: "Couldn't find anything to translate there — try different text."
     end
