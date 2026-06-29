@@ -10,10 +10,14 @@
 class TranslateController < ApplicationController
   # 1–9 items: no batch, straight in. 10+: send to the review screen.
   BATCH_THRESHOLD = 9
+  # Audio clips are short (a colleague speaks a sentence). Cap matches /audio_decks.
+  MAX_AUDIO_BYTES = 25.megabytes
 
-  # Standalone Translate page (the tab landing). Mode = type | photo segmented toggle.
+  MODES = %w[type photo upload record].freeze
+
+  # Standalone Translate page (the tab landing). Mode = type | photo | upload | record.
   def new
-    @mode = %w[type photo].include?(params[:mode]) ? params[:mode] : "type"
+    @mode = MODES.include?(params[:mode]) ? params[:mode] : "type"
   end
 
   def create
@@ -27,6 +31,11 @@ class TranslateController < ApplicationController
       if text.blank?
         return redirect_to new_translate_path, alert: "Couldn't read any #{current_user.target_language_name} text in that image."
       end
+    elsif params[:audio].present?
+      # A spoken clip (uploaded or recorded live) → transcribe it (#16), then translate
+      # the transcript through the SAME pipeline as typed text. Unlike the voicemail
+      # flow, the clip is kept 2 days for replay (Recording + RecordingSweepJob).
+      return if (text = transcribe_audio(params[:audio])).nil?  # already redirected
     end
 
     if text.blank?
@@ -58,5 +67,32 @@ class TranslateController < ApplicationController
   rescue Translator::Error, ImageReader::Error => e
     Rails.logger.error("[Translate] #{e.class}: #{e.message}")
     redirect_to new_translate_path, alert: "That didn't work — give it another try."
+  end
+
+  private
+
+  # Transcribe a spoken clip and persist it for 2-day replay. Returns the transcript
+  # String, or nil after redirecting (too large / no speech) so #create can bail.
+  def transcribe_audio(file)
+    if file.size > MAX_AUDIO_BYTES
+      redirect_to new_translate_path, alert: "That recording is too large (max #{MAX_AUDIO_BYTES / 1.megabyte} MB)."
+      return nil
+    end
+
+    language = input_language
+    transcript = Transcriber.new(language: language).call(file.tempfile.path)
+    current_user.recordings.create!(language: language, transcript: transcript, audio: file)
+    transcript
+  rescue Transcriber::Error => e
+    Rails.logger.error("[Translate audio] #{e.class}: #{e.message}")
+    redirect_to new_translate_path, alert: "Couldn't make out any speech in that recording — try again."
+    nil
+  end
+
+  # The language the input is in. Defaults to the language the user is learning (#16);
+  # the input-language toggle (#17) lets them pick another (e.g. English).
+  def input_language
+    code = params[:input_language].to_s
+    Translation::LANGUAGES.key?(code) ? code : current_user.target_language
   end
 end

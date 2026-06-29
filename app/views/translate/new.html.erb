@@ -5,14 +5,14 @@
 <header class="mb-6">
   <h1 class="text-2xl font-semibold tracking-tight">Translate</h1>
   <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-    <%= target_name %> → <%= source_name %> · type it or snap a photo
+    <%= target_name %> → <%= source_name %> · type it, snap it, or speak it
   </p>
 </header>
 
-<%# ── Type | Photo segmented toggle (mirrors the /design/app prototype pills) ── %>
+<%# ── Type | Photo | Record | Upload segmented toggle ── %>
 <div class="mb-6 inline-flex w-full rounded-lg border border-gray-200 bg-gray-100 p-0.5 dark:border-gray-700 dark:bg-gray-800">
-  <% %w[type photo].each do |m| %>
-    <%= link_to m.capitalize, new_translate_path(mode: m),
+  <% { "type" => "Type", "photo" => "Photo", "record" => "Record", "upload" => "Upload" }.each do |m, lbl| %>
+    <%= link_to lbl, new_translate_path(mode: m),
           class: "flex-1 rounded-md px-3 py-1.5 text-center text-sm #{@mode == m ? 'bg-white font-medium text-brand-indigo shadow-sm dark:bg-gray-700 dark:text-brand-paper' : 'text-gray-500 dark:text-gray-400'}" %>
   <% end %>
 </div>
@@ -36,7 +36,7 @@
     </div>
   <% end %>
 
-<% else %>
+<% elsif @mode == "photo" %>
   <%# Photo mode: pick/snap a photo → OCR (ImageReader) → translate. Auto-submits on pick. %>
   <%= form_with url: translate_path, method: :post, multipart: true, data: { turbo: false } do |f| %>
     <%= hidden_field_tag :capture, "1" %>
@@ -45,6 +45,47 @@
       <span class="text-sm">Snap a sign, menu, or page</span>
       <span class="text-xs text-gray-400">we read the <%= target_name %> text, then translate it</span>
       <%= f.file_field :image, accept: "image/*", capture: "environment", class: "sr-only",
+            data: { controller: "auto-submit", action: "change->auto-submit#submit" } %>
+    </label>
+    <p class="mt-3 text-center text-xs text-gray-400 dark:text-gray-500">
+      Saved automatically to your <strong>Translated</strong> deck.
+    </p>
+  <% end %>
+
+<% elsif @mode == "record" %>
+  <%# Record mode: capture the mic, drop the clip into the hidden file field, submit. %>
+  <%= form_with url: translate_path, method: :post, multipart: true,
+        data: { turbo: false, controller: "audio-recorder" } do |f| %>
+    <%= hidden_field_tag :capture, "1" %>
+    <%= f.file_field :audio, class: "hidden", data: { audio_recorder_target: "fileInput" } %>
+
+    <div class="flex aspect-[4/3] flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-gray-300 text-gray-400 dark:border-gray-700">
+      <button type="button" data-action="audio-recorder#toggle"
+              class="flex flex-col items-center gap-1 rounded-full px-6 py-4 text-brand-indigo hover:bg-brand-indigo/5 dark:text-brand-paper">
+        <span data-audio-recorder-target="icon" class="text-4xl">🎤</span>
+        <span data-audio-recorder-target="label" class="text-sm font-medium">Record</span>
+      </button>
+      <span data-audio-recorder-target="timer" class="hidden font-mono text-sm text-gray-500 dark:text-gray-400">0:00</span>
+      <span data-audio-recorder-target="status" class="text-xs text-gray-400 dark:text-gray-500"></span>
+      <audio data-audio-recorder-target="player" class="hidden"></audio>
+      <button type="button" data-audio-recorder-target="play" data-action="audio-recorder#playToggle"
+              class="hidden rounded-md border border-gray-300 px-3 py-1 text-xs text-gray-600 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300">▶ Play</button>
+    </div>
+    <p class="mt-3 text-center text-xs text-gray-400 dark:text-gray-500">
+      Point it at a <%= target_name %> speaker — we transcribe and translate.
+      The clip is kept 2 days for replay, then auto-deleted.
+    </p>
+  <% end %>
+
+<% else %>
+  <%# Upload mode: pick an audio file → transcribe → translate. Auto-submits on pick. %>
+  <%= form_with url: translate_path, method: :post, multipart: true, data: { turbo: false } do |f| %>
+    <%= hidden_field_tag :capture, "1" %>
+    <label class="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-300 text-gray-400 hover:border-brand-indigo hover:text-brand-indigo dark:border-gray-700 dark:hover:border-brand-paper dark:hover:text-brand-paper">
+      <span class="text-3xl">⬆️</span>
+      <span class="text-sm">Choose an audio file</span>
+      <span class="text-xs text-gray-400">m4a, mp3, wav, ogg… up to 25 MB</span>
+      <%= f.file_field :audio, accept: "audio/*", class: "sr-only",
             data: { controller: "auto-submit", action: "change->auto-submit#submit" } %>
     </label>
     <p class="mt-3 text-center text-xs text-gray-400 dark:text-gray-500">

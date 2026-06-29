@@ -14,6 +14,7 @@ class User < ApplicationRecord
   has_many :terms, through: :decks
   has_many :attempts, dependent: :destroy
   has_many :schedulings, dependent: :destroy  # FSRS cache rows (#axis-4)
+  has_many :recordings, dependent: :destroy   # Translate-audio clips, kept 2 days (#16)
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
 
